@@ -1,0 +1,176 @@
+\documentclass{article}
+
+% Anonymous double-blind workshop submission.
+\usepackage[dblblindworkshop]{neurips_2026}
+\workshoptitle{AgenticOS @ NeurIPS 2026}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{enumitem}
+
+\newcommand{\hal}{\textsc{hal}}
+\newcommand{\nd}{\textsc{nd}}
+\newcommand{\rhoS}{\rho}
+\newcommand{\tauK}{\tau_b}
+
+\title{Does Cost-Efficiency Travel? Accuracy and Cost Rank Transfer in Fixed-Scaffold Agent Evaluation}
+
+\author{Anonymous Author(s)}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Agent leaderboards increasingly report both task success and dollar cost, inviting practitioners to select a ``cost-efficient'' model from a single benchmark. We test whether this selection signal transfers across workloads. Using public results from the Holistic Agent Leaderboard (\hal), we hold the displayed agent scaffold fixed to the HAL Generalist Agent and compare repeated displayed model labels across six benchmarks. Accuracy-rank association is often positive across benchmark pairs, while dollar-cost-rank association is markedly more heterogeneous: among pairs with at least 12 shared labels, cost Spearman correlation ranges from $0.74$ to $0.93$; across all eligible pairs it ranges from $-0.75$ to $0.93$. For example, GAIA and ScienceAgentBench have accuracy correlation $0.64$ but cost correlation $-0.75$ over seven shared labels. Correspondingly, nondominated accuracy--cost frontier sets have low overlap. We also distinguish the ordinary nondominated frontier from a HAL-inspired convex-hull reconstruction, finding that the public HAL labels align closely with the latter but not identically. These descriptive results suggest that dollar-cost efficiency from one agent leaderboard should not be presumed portable to another workload, even when accuracy ordering is partly preserved. The study does not identify causal model or scaffold effects: public display labels do not fully encode all benchmark-specific setup details.
+\end{abstract}
+
+\section{Introduction}
+
+Agent benchmarks now evaluate systems that reason over multiple steps, invoke tools, and interact with environments. Unlike static model evaluations, an agent's reported behavior depends on an underlying language model, an agent scaffold, tools, prompts, execution limits, and the task environment. These systems can also be expensive to evaluate: the Holistic Agent Leaderboard (\hal) reports 21,730 rollouts across nine benchmarks and roughly \$40,000 in evaluation cost~\citep{kapoor2026hal}. Consequently, cost-aware leaderboards increasingly plot accuracy against dollar cost and recommend points on a cost--accuracy frontier.
+
+A practical inference often follows: if a model or agent is cost-efficient on one benchmark, it is a promising low-cost choice elsewhere. This inference is plausible if model capability and model cost are mostly portable. It can fail if an agent's token consumption, retry loops, tool calls, and stopping behavior change with the workload. This paper asks a narrow descriptive question: \emph{when the publicly displayed scaffold is held fixed, how stable are repeated HAL displayed model labels' accuracy ranks, dollar-cost ranks, and cost--accuracy frontier positions across workloads?}
+
+We conduct a secondary analysis of public HAL leaderboard data. The data are sparse and unbalanced across scaffolds, so rather than attempt an unsupported causal decomposition of model, scaffold, and workload effects, we focus on the only broadly repeated scaffold: the HAL Generalist Agent. Across six benchmarks with sufficient overlap, we compare rankings only among shared displayed model labels. Our main findings are:
+\begin{itemize}[leftmargin=*,nosep]
+    \item Accuracy-rank associations are often positive, but dollar-cost-rank associations are substantially more heterogeneous and can be negative.
+    \item Nondominated cost--accuracy frontier membership is correspondingly unstable: no displayed label tested on at least five of the six workloads is nondominated on every tested workload.
+    \item Frontier conclusions depend on the decision model. The public HAL \texttt{Is Pareto} labels closely match an origin-anchored convex-hull reconstruction, whereas standard nondominance retains additional points.
+\end{itemize}
+
+The result is not universal non-transfer. Some pairs show high agreement in both accuracy and dollar cost. Rather, transfer cannot safely be assumed from a single leaderboard.
+
+\section{Related work}
+
+\paragraph{Cost-aware agent evaluation.}
+\citet{kapoor2026hal} introduced HAL as a standardized, cost-aware agent leaderboard spanning coding, web, science, and customer-service settings. HAL reports dollar- and token-cost Pareto curves and documents substantial scaffold sensitivity. \citet{agentsmatter2024} argue that agent evaluation should jointly consider accuracy and cost, using Pareto plots to expose avoidable expenditure. SWE-Effi studies resource-constrained software-engineering agents and reports that effectiveness depends on scaffold--model integration~\citep{sweeffi2025}. These works establish the importance of cost and scaffold effects, but do not systematically measure whether a cost--accuracy ordering transfers between distinct workloads under a fixed scaffold.
+
+\paragraph{Stability of agent and benchmark rankings.}
+\citet{ndzomga2026efficient} ask whether smaller task subsets can preserve \emph{within-benchmark} agent rankings under scaffold and temporal shift. Their target is evaluation reduction, not cross-workload transfer of cost--accuracy trade-offs. In the static-LLM setting, Benchmark$^2$ proposes cross-benchmark ranking consistency based on Kendall correlation~\citep{qian2026benchmark2}. We adapt the cross-benchmark ranking perspective to interactive agents and separately analyze accuracy ranks, dollar-cost ranks, and frontier-set overlap.
+
+\section{Data, scope, and coverage}
+\label{sec:data}
+
+We use the public \texttt{all\_leaderboards\_costs\_HAL.csv} snapshot distributed with \citet{ndzomga2026efficient}. The frozen file contains 242 displayed evaluations across nine benchmarks, 11 displayed scaffolds, and 29 displayed model labels. Accuracy and total dollar cost are complete, but 235 rows report a single run and only seven report two runs. The data therefore support descriptive rank and frontier analysis, not rollout-level uncertainty estimation.
+
+Coverage determines the design. Most scaffolds occur on only one benchmark; the HAL Generalist Agent occurs on seven. We retain the six Generalist benchmarks with adequate overlap: CORE-Bench Hard (21 labels), GAIA (17), SciCode (9), ScienceAgentBench (7), SWE-bench Verified Mini (18), and TAU-bench Airline (14). We exclude USACO because it contains one Generalist row. Figure~\ref{fig:coverage} shows the resulting incomplete label-by-benchmark matrix.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.94\linewidth]{figures/coverage_heatmap.pdf}
+  \caption{Coverage of the primary cohort. A filled cell indicates that the public HAL table contains the displayed model label under the displayed HAL Generalist Agent scaffold. Sparse coverage motivates pairwise analyses restricted to shared labels.}
+  \label{fig:coverage}
+\end{figure}
+
+The repeated unit is an exact public \texttt{Models} display string within the exact public \texttt{Agent Name} display string. This includes the visible date and reasoning suffix when present. It does \emph{not} fully specify all benchmark-specific prompts, tools, budgets, or harness settings. Thus, the analysis describes repeated public HAL labels under a repeated displayed scaffold; it is not a controlled base-model experiment.
+
+\section{Method}
+\label{sec:method}
+
+\paragraph{Rank transfer.}
+For each benchmark pair with at least five shared displayed labels, we compute Spearman rank correlation $\rhoS$ and Kendall's $\tauK$ separately for accuracy and total dollar cost. Let $L_{ij}$ be labels observed in both benchmarks $i$ and $j$. We correlate their displayed accuracy values and, separately, their displayed total costs. We report $|L_{ij}|$ for every pair.
+
+To characterize sensitivity to the finite label set, we use 5,000 percentile \emph{configuration-resampling} draws: resample shared labels with replacement and recompute the correlation. These intervals are neither rollout-level uncertainty intervals nor population-model confidence intervals. Degenerate draws without rank variation are excluded and counted. We do not use interval inclusion of zero for hypothesis testing.
+
+\paragraph{Two frontier definitions.}
+For lower cost and higher accuracy, the nondominated frontier includes point $x$ if no observed point $y$ has cost no greater than $x$, accuracy at least that of $x$, and at least one strict improvement. This corresponds to choosing one displayed configuration. HAL's public analysis code instead adds the origin and computes an upper cost--accuracy hull, which has a randomized-policy interpretation: a mixture of two systems can dominate an interior point in expectation. We implement a \emph{HAL-inspired convex-hull reconstruction} based on the public reference code, while avoiding a claim of exact identity because two supplied labels differ in this frozen snapshot. For both definitions, we report pairwise Jaccard similarity of frontier sets. We distinguish full-cohort frontiers from frontiers recomputed only on a pair's shared labels.
+
+\paragraph{Scaffold sensitivity.}
+As a secondary descriptive check, we compare shared displayed labels across scaffolds \emph{within} a benchmark, reporting paired accuracy differences and log cost ratios. This confirms prior scaffold sensitivity rather than estimating a general scaffold effect.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Accuracy ranks transfer more consistently than dollar-cost ranks}
+
+Figure~\ref{fig:similarity} is the main result. Accuracy-rank correlations are often positive, while cost-rank correlations vary from strongly positive to strongly negative. GAIA--SWE-bench Mini has 17 shared labels and shows positive association in both accuracy ($\rhoS=0.71$) and cost ($\rhoS=0.89$). In contrast, GAIA--ScienceAgentBench has $\rhoS=0.64$ for accuracy but $\rhoS=-0.75$ for dollar cost over seven shared labels. SciCode--SWE-bench Mini is near zero for both metrics ($\rhoS=0.15$ accuracy, $0.02$ cost, $N=9$), but its broad configuration-resampling intervals make it a descriptive example rather than precise evidence of no association.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.98\textwidth]{figures/rank_transfer_compact.pdf}
+  \caption{Cross-workload rank transfer under the displayed HAL Generalist Agent scaffold. Each off-diagonal cell reports Spearman $\rhoS$ and the number of shared displayed labels. Accuracy association is often positive, whereas dollar-cost association is more heterogeneous; negative values occur for several pairs involving ScienceAgentBench.}
+  \label{fig:similarity}
+\end{figure*}
+
+Table~\ref{tab:highoverlap} lists the six pairs with at least 12 shared labels. The strongest evidence comes from these larger-overlap comparisons: cost ranks are highly aligned in these pairs, but nondominated frontier Jaccard similarity remains low to moderate ($0.17$--$0.43$). Thus, even where two scalar ranks agree, binary frontier composition can change as the achievable accuracy--cost trade-off changes.
+
+\begin{table}[t]
+\caption{Higher-overlap benchmark pairs. Brackets are 5,000-draw configuration-resampling sensitivity intervals, not rollout-level confidence intervals. ND denotes nondominated frontier membership recomputed on the shared-label cohort.}
+\label{tab:highoverlap}
+\centering
+\footnotesize
+\input{tables/high_overlap_pairs.tex}
+\end{table}
+
+\subsection{Frontier membership is not portable}
+
+Figure~\ref{fig:frontier} displays nondominated membership by workload. Among labels tested on at least five workloads, Claude-3.7 Sonnet High has the highest nondominated appearance count, four of six; no broadly tested label is nondominated everywhere. Table~\ref{tab:rates} summarizes the broadly covered labels. Because membership is discontinuous near a frontier, we interpret this result together with the continuous rank results rather than as a standalone universal ranking.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.98\linewidth]{figures/weak_pareto_membership.pdf}
+  \caption{Nondominated cost--accuracy membership across primary workloads. The final column is each label's rate over its available workloads. No label tested on at least five workloads is nondominated on all of them.}
+  \label{fig:frontier}
+\end{figure}
+
+\begin{table}[t]
+\caption{Nondominated frontier appearances for labels tested on at least five primary workloads.}
+\label{tab:rates}
+\centering
+\footnotesize
+\input{tables/frontier_rates.tex}
+\end{table}
+
+\subsection{Frontier definition and scaffold comparisons matter}
+
+The source HAL labels recover 30 frontier rows under the hull reconstruction, with two discrepancies; standard nondominance includes 19 additional non-dominated rows. This is substantively relevant: a discrete buyer choosing one agent and a deployer willing to randomize between agents solve different decision problems.
+
+Within individual benchmarks, scaffold changes are also large and direction-dependent. For example, across 15 shared labels on SWE-bench Mini, the displayed SWE-Agent is on average 27.4 percentage points more accurate than the displayed Generalist scaffold, with a higher median cost. Across seven shared labels on ScienceAgentBench, SAB Self-Debug is both more accurate on average and lower cost. These benchmark-specific contrasts are consistent with HAL and SWE-Effi, and motivate rather than replace the fixed-scaffold primary design.
+
+\section{Discussion}
+
+The practical implication is conditional, not absolute. A cost-efficient point on one benchmark can be a useful prior, especially when benchmark pairs show strong cost-rank agreement. Yet cost rank is not uniformly portable, and several pairs exhibit weak or negative association despite positive accuracy association. Dollar cost plausibly responds to workload-specific execution dynamics---tool calls, retries, loop length, and termination behavior---in addition to model pricing. A practitioner selecting an agent for a new workload should therefore validate cost on representative tasks rather than extrapolate from a single efficiency leaderboard.
+
+The analysis also highlights a reporting issue. A frontier label is not self-explanatory: ordinary nondominance and a convex-hull/randomization frontier encode different deployment choices. Leaderboards should state which decision model they use and, when feasible, expose both.
+
+\section{Limitations}
+
+This is a secondary analysis of a sparse public snapshot. First, repeated coverage is incomplete; most scaffolds occur on only one benchmark, and the primary fixed-scaffold analysis retains only six workloads. Second, public display labels do not fully encode benchmark-specific prompts, tool policies, budgets, or harness versions. Holding a display label fixed does not isolate a causal base-model effect. Third, most evaluations are single-run, so configuration-resampling intervals do not measure rollout variance. Fourth, dollar cost combines observed execution with pricing assumptions; the supplied CSV lacks token totals, preventing a token-cost robustness analysis. Fifth, only three same-domain pairs are available under HAL's categories, so domain conclusions are exploratory and omitted from the main claim. Finally, frontier membership is sensitive to the comparator set and small changes near the frontier; we therefore report both full-cohort and shared-cohort analyses in the supplemental material.
+
+\section{Conclusion}
+
+Across public HAL results with a repeated displayed Generalist scaffold, accuracy ranks often transfer more consistently than dollar-cost ranks, while cost--accuracy frontier membership is not reliably portable. The evidence is heterogeneous rather than uniformly negative: some workload pairs align strongly on both axes. Still, a single benchmark's cost-efficiency ranking is insufficient evidence for selecting an agent on a new workload. Future agent leaderboards should use crossed model--scaffold--benchmark designs with repeated runs and report both token- and dollar-based decision frontiers.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\clearpage
+\appendix
+\section{Frontier-label reproducibility audit}
+\label{app:pareto}
+\begin{table}[h]
+\caption{Supplied HAL frontier labels compared with reconstructed frontiers by benchmark. Agreement is the fraction of displayed rows with identical Boolean labels.}
+\centering
+\scriptsize
+\input{appendix/pareto_label_audit.tex}
+\end{table}
+
+\section{Reproducibility details}
+The analysis freezes the public CSV using the recorded source hash in the
+anonymous supplement. It uses exact public display labels, minimum pairwise overlap five, 5,000
+configuration-resampling draws, and random seed 20260816. The released anonymous
+supplement should include the analysis code, input provenance manifest, generated
+tables, and commands needed to regenerate all figures.
+
+\input{checklist}
+
+\end{document}

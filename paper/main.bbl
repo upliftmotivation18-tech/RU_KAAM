@@ -1,0 +1,40 @@
+\begin{thebibliography}{5}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Fan et~al.(2025)Fan, Vasilevski, Lin, et~al.]{sweeffi2025}
+Zhiyu Fan, Kirill Vasilevski, Dayi Lin, et~al.
+\newblock {SWE}-effi: Re-evaluating software {AI} agent system effectiveness
+  under resource constraints.
+\newblock \emph{arXiv preprint arXiv:2509.09853}, 2025.
+\newblock URL \url{https://arxiv.org/abs/2509.09853}.
+
+\bibitem[Kapoor et~al.(2024)]{agentsmatter2024}
+Sayash Kapoor et~al.
+\newblock {AI} agents that matter.
+\newblock \emph{arXiv preprint arXiv:2407.01502}, 2024.
+\newblock URL \url{https://arxiv.org/abs/2407.01502}.
+
+\bibitem[Kapoor et~al.(2026)]{kapoor2026hal}
+Sayash Kapoor et~al.
+\newblock Holistic agent leaderboard: The missing infrastructure for {AI} agent
+  evaluation.
+\newblock \emph{arXiv preprint arXiv:2510.11977}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2510.11977}.
+
+\bibitem[Ndzomga(2026)]{ndzomga2026efficient}
+Franck Ndzomga.
+\newblock Efficient benchmarking of {AI} agents.
+\newblock \emph{arXiv preprint arXiv:2603.23749}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2603.23749}.
+
+\bibitem[Qian et~al.(2026)Qian, Huang, et~al.]{qian2026benchmark2}
+Qi~Qian, Chengsong Huang, et~al.
+\newblock Benchmark$^2$: Systematic evaluation of {LLM} benchmarks.
+\newblock \emph{arXiv preprint arXiv:2601.03986}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2601.03986}.
+
+\end{thebibliography}
