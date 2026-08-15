@@ -3,3 +3,9 @@ __pycache__/
 .pytest_cache/
 outputs/
 .venv/
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/anonymous_supplement/stage/
