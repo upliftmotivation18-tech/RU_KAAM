@@ -8,7 +8,7 @@
 
 ## Research question
 
-When the agent scaffold is held fixed, how stable are model configurations' accuracy, dollar-cost, and accuracy--cost frontier positions across agent workloads?
+When the publicly displayed agent scaffold is held fixed, how stable are repeated HAL displayed model labels' accuracy, dollar-cost, and accuracy--cost frontier positions across agent workloads?
 
 The study deliberately avoids a causal decomposition of model, scaffold, and workload effects. The public HAL snapshot has sparse and unbalanced scaffold-by-benchmark coverage; most scaffolds appear on only one benchmark. The primary cohort therefore fixes the scaffold to **HAL Generalist Agent** and analyzes the six benchmarks with adequate pairwise model overlap:
 
@@ -29,13 +29,13 @@ python3 scripts/run_analysis.py --bootstrap 5000
 
 Outputs are written to `outputs/tables/` and `outputs/figures/`.
 
-The analysis uses a frozen local copy of `all_leaderboards_costs_HAL.csv`. Its source snapshot has SHA-256:
+The pipeline uses a frozen local copy of `all_leaderboards_costs_HAL.csv`. Exact upstream provenance, source license record, content hash, and re-acquisition instructions are in `data/SOURCE_MANIFEST.md`; the default pipeline verifies the expected local SHA-256 before analysis.
 
 ```text
 f8a07cbe6aae2801f592df3db7432a91c32a3de63dcf3ac4e0b5896bd34731f0
 ```
 
-See `data/README.md` before redistributing source data: retain upstream attribution and verify licensing, or replace the local copy with a download-and-hash step.
+See `data/SOURCE_MANIFEST.md` for exact upstream provenance, acquisition instructions, and redistribution considerations.
 
 ## Method
 
@@ -46,14 +46,14 @@ For each pair of benchmarks sharing at least five model configurations, the pipe
 - percentile-bootstrap intervals over shared configurations;
 - Jaccard similarity of frontier sets.
 
-Bootstrap intervals quantify sensitivity to the finite shared configuration set; because nearly all CSV rows represent one run, they are **not** rollout-level uncertainty intervals.
+Bootstrap intervals are percentile **configuration-resampling sensitivity intervals** over the finite shared set of named HAL display labels. They are neither rollout-level intervals nor population-model confidence intervals; because nearly all CSV rows represent one run, they should not be used for null-hypothesis decisions.
 
 ### Two frontier definitions
 
 The repository computes and reports both definitions because they answer different deployment questions:
 
-1. **Weak Pareto frontier:** no observed discrete configuration achieves at least the same accuracy at no greater cost, with one inequality strict.
-2. **HAL-style convex-hull frontier:** adds the origin and retains the upper cost--accuracy convex envelope. This has a randomized-policy interpretation: a point can be excluded if a mixture of two configurations dominates it in expected cost and accuracy.
+1. **Nondominated Pareto frontier:** no observed discrete configuration achieves at least the same accuracy at no greater cost, with one inequality strict.
+2. **HAL-inspired convex-hull reconstruction:** adds the origin and retains the upper cost--accuracy convex envelope. This has a randomized-policy interpretation: a point can be excluded if a mixture of two configurations dominates it in expected cost and accuracy. It is a reconstruction based on public reference code, not an asserted exact reproduction; two source-label discrepancies remain in this frozen snapshot.
 
 The `outputs/tables/pareto_label_reproducibility.csv` audit compares both reconstructions with the source CSV's `Is Pareto` labels.
 

@@ -2,9 +2,7 @@
 
 ## Main finding
 
-Holding the HAL Generalist Agent scaffold fixed, accuracy-rank transfer is heterogeneous but generally positive across the six retained workloads, whereas dollar-cost-rank transfer ranges from strongly positive to strongly negative. The resulting cost--accuracy frontier membership is not reliably portable across benchmarks.
-
-Do **not** interpret this as universal non-transfer. Several pairs show high agreement in both accuracy and dollar cost, including GAIA--SWE-bench Mini and SWE-bench Mini--TAU Airline. The defensible claim is that transfer cannot safely be assumed from a single leaderboard.
+Holding the displayed HAL Generalist Agent scaffold fixed, rank transfer for repeated HAL displayed model labels is heterogeneous: accuracy-rank association is often positive across the six retained workloads, whereas dollar-cost-rank association ranges from strongly positive to strongly negative. The resulting cost--accuracy frontier membership is not reliably portable across benchmarks. Because the display labels do not encode all benchmark-specific setup details, these findings are descriptive of the public HAL rows rather than a controlled causal model comparison.
 
 ## Data and coverage
 
@@ -14,14 +12,14 @@ The data contain complete accuracy and total-dollar-cost fields, but 235 of 242 
 
 ## Frontier reproducibility
 
-The source CSV's `Is Pareto` labels align almost perfectly with the HAL-style origin-anchored convex-hull reconstruction: 30 supplied frontier rows are recovered, with two row-level discrepancies. The standard weak non-dominance definition identifies 19 additional non-dominated rows. The paper should explicitly distinguish these two objects:
+The source CSV's `Is Pareto` labels align almost perfectly with the **HAL-inspired origin-anchored convex-hull reconstruction**: 30 supplied frontier rows are recovered, with two row-level discrepancies. The standard nondominance definition identifies 19 additional non-dominated rows. The paper should explicitly distinguish these two objects:
 
-- weak Pareto: discrete configuration selection;
+- nondominated Pareto: discrete configuration selection;
 - convex hull: randomized-policy / agent-mixture interpretation.
 
 ## Main pairwise examples
 
-| Pair | Shared configurations | Accuracy Spearman rho [bootstrap 95% CI] | Cost Spearman rho [bootstrap 95% CI] |
+| Pair | Shared displayed labels | Accuracy Spearman rho [configuration-resampling interval] | Cost Spearman rho [configuration-resampling interval] |
 |---|---:|---:|---:|
 | GAIA -- SWE-bench Mini | 17 | 0.71 [0.31, 0.91] | 0.89 [0.61, 0.99] |
 | SWE-bench Mini -- TAU Airline | 14 | 0.76 [0.40, 0.91] | 0.82 [0.46, 0.97] |
@@ -29,7 +27,7 @@ The source CSV's `Is Pareto` labels align almost perfectly with the HAL-style or
 | CORE-Bench Hard -- ScienceAgentBench | 7 | 0.56 [-0.41, 1.00] | -0.64 [-1.00, 0.17] |
 | SciCode -- SWE-bench Mini | 9 | 0.15 [-0.66, 0.78] | 0.02 [-0.81, 0.82] |
 
-The small-overlap intervals are wide. Treat the high-overlap pairs as the most stable evidence and describe the remaining pairs as descriptive heterogeneity.
+The small-overlap configuration-resampling intervals are wide and should not be used for hypothesis tests. Treat the high-overlap pairs as the most stable descriptive evidence and describe the remaining pairs as descriptive heterogeneity.
 
 ## Fragile-pair sanity check: SciCode--SWE-bench Mini
 
@@ -37,7 +35,7 @@ The low-correlation pair has exactly 9 shared Generalist model configurations. T
 
 ## Pareto membership
 
-Under standard weak Pareto membership within the fixed-Generalist cohorts, no broadly tested configuration appears on the frontier in every workload. Among configurations tested on five or more benchmarks, the highest weak-frontier rate is 4/6 for Claude-3.7 Sonnet High; several configurations appear on only one or no frontiers. Pairwise common-cohort weak-frontier Jaccard similarity ranges from 0.17 to 0.43 in many pairs, with some values lower; this should be interpreted alongside continuous rank metrics.
+Under standard nondominated Pareto membership within the fixed-Generalist cohorts, no broadly tested displayed label appears on the frontier in every workload. Among labels tested on five or more benchmarks, the highest nondominated-frontier rate is 4/6 for Claude-3.7 Sonnet High; several labels appear on only one or no frontiers. Pairwise common-cohort nondominated-frontier Jaccard similarity ranges from 0.17 to 0.43 in many pairs, with some values lower; this should be interpreted alongside continuous rank metrics.
 
 ## Domain analysis
 

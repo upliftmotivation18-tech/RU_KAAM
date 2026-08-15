@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import platform
 import sys
+from datetime import UTC, datetime
 from itertools import combinations
 from pathlib import Path
 
@@ -27,6 +30,7 @@ from src.analysis import (
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "data" / "all_leaderboards_costs_HAL.csv"
 DEFAULT_OUTPUT = PROJECT_ROOT / "outputs"
+FROZEN_INPUT_SHA256 = "f8a07cbe6aae2801f592df3db7432a91c32a3de63dcf3ac4e0b5896bd34731f0"
 GENERALIST = "HAL Generalist Agent"
 PRIMARY_BENCHMARKS = [
     "corebench_hard",
@@ -49,8 +53,36 @@ BENCHMARK_LABELS = {
 }
 
 
+def file_sha256(path: Path) -> str:
+    """Return a content hash without loading the source CSV into memory at once."""
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_frozen_input(input_path: Path) -> str:
+    """Verify the default source snapshot; return the hash for run provenance."""
+    observed = file_sha256(input_path)
+    if input_path.resolve() == DEFAULT_INPUT.resolve() and observed != FROZEN_INPUT_SHA256:
+        raise ValueError(
+            "The default frozen input hash does not match the recorded source manifest. "
+            f"Expected {FROZEN_INPUT_SHA256}; observed {observed}."
+        )
+    return observed
+
+
 def load_data(input_path: Path) -> pd.DataFrame:
-    """Load the frozen source CSV and add unambiguous analysis identifiers."""
+    """Load the frozen source CSV and add displayed-label analysis identifiers.
+
+    The public ``Models`` field is the unit available for matching. It encodes a
+    displayed HAL model label and often a date/reasoning suffix, but does not
+    fully document every benchmark-specific prompt, tool, budget, or harness
+    detail. Results therefore concern repeated **HAL displayed model labels
+    within the displayed Generalist scaffold**, not a controlled base-model
+    causal comparison.
+    """
     data = pd.read_csv(input_path)
     required = {"Benchmark", "Agent Name", "Models", "Accuracy", "Total Cost", "Is Pareto", "Runs"}
     missing = required - set(data.columns)
@@ -116,12 +148,13 @@ def fixed_scaffold_pairwise_analysis(
     n_bootstrap: int = 5_000,
     seed: int = 20260816,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Compute pairwise rank transfer and two frontier similarity variants.
+    """Compute pairwise transfer for shared HAL displayed model labels.
 
     ``global`` frontier metrics use each benchmark's full fixed-scaffold cohort.
     ``common_cohort`` metrics recompute the frontier after limiting both sides to
-    the pair's shared configurations. Both are reported because competitor-set
-    composition itself changes a frontier.
+    the pair's shared displayed labels. Both are reported because competitor-set
+    composition itself changes a frontier. This matching cannot control for
+    undocumented benchmark-specific experimental settings.
     """
     subset = data[
         data["scaffold"].eq(scaffold) & data["benchmark"].isin(benchmarks)
@@ -225,6 +258,19 @@ def fixed_scaffold_pairwise_analysis(
                 "benchmark_a_label": BENCHMARK_LABELS[benchmark_a],
                 "benchmark_b_label": BENCHMARK_LABELS[benchmark_b],
                 "n_shared": len(shared),
+                "n_configuration_resamples": n_bootstrap,
+                "accuracy_spearman_n_valid_resamples": accuracy_bootstrap[
+                    "n_valid_bootstrap"
+                ],
+                "accuracy_spearman_n_degenerate_resamples": accuracy_bootstrap[
+                    "n_degenerate_bootstrap"
+                ],
+                "cost_spearman_n_valid_resamples": cost_bootstrap[
+                    "n_valid_bootstrap"
+                ],
+                "cost_spearman_n_degenerate_resamples": cost_bootstrap[
+                    "n_degenerate_bootstrap"
+                ],
                 "accuracy_spearman": weak_statistics["accuracy_spearman"],
                 "accuracy_kendall": weak_statistics["accuracy_kendall"],
                 "cost_spearman": weak_statistics["cost_spearman"],
@@ -436,6 +482,11 @@ def write_outputs(
     configuration_rates: pd.DataFrame,
     sensitivity: pd.DataFrame,
     output_directory: Path,
+    *,
+    input_path: Path,
+    input_sha256: str,
+    n_bootstrap: int,
+    seed: int,
 ) -> None:
     """Persist every table needed to reproduce reported results."""
     output_directory.mkdir(parents=True, exist_ok=True)
@@ -477,15 +528,24 @@ def write_outputs(
     plot_pareto_membership(data, figures / "weak_pareto_membership.png")
 
     metadata = {
-        "source_csv": str(DEFAULT_INPUT),
+        "source_csv": str(input_path.resolve()),
+        "source_csv_sha256": input_sha256,
+        "frozen_default_source_sha256": FROZEN_INPUT_SHA256,
+        "run_timestamp_utc": datetime.now(UTC).isoformat(),
+        "python_version": platform.python_version(),
+        "pandas_version": pd.__version__,
+        "numpy_version": np.__version__,
         "primary_scaffold": GENERALIST,
+        "matching_unit": "Exact public HAL Models display label within exact public Agent Name display label.",
+        "matching_caveat": "Display labels do not fully specify benchmark-specific prompts, tools, budgets, or harness details.",
         "primary_benchmarks": PRIMARY_BENCHMARKS,
         "minimum_pairwise_overlap": 5,
-        "bootstrap_resamples": 5000,
-        "bootstrap_seed": 20260816,
+        "configuration_resamples": n_bootstrap,
+        "bootstrap_seed": seed,
+        "interval_interpretation": "Percentile configuration-resampling sensitivity interval, not rollout-level or population-model confidence interval.",
         "frontier_definitions": {
-            "weak": "Standard weak non-dominance for discrete configuration selection.",
-            "convex_hull": "HAL-style origin-anchored convex-hull frontier with randomized-policy interpretation.",
+            "nondominated_pareto": "Standard nondominated frontier for discrete configuration selection.",
+            "hal_inspired_convex_hull": "Origin-anchored hull reconstruction based on inspected HAL reference code; randomized-policy interpretation; two supplied-label discrepancies in this source snapshot.",
         },
     }
     (output_directory / "analysis_metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
@@ -498,12 +558,26 @@ def main() -> None:
     parser.add_argument("--bootstrap", type=int, default=5_000)
     arguments = parser.parse_args()
 
+    input_sha256 = verify_frozen_input(arguments.input)
     data = add_frontiers(load_data(arguments.input))
+    bootstrap_seed = 20260816
     pairwise, configuration_rates = fixed_scaffold_pairwise_analysis(
-        data, n_bootstrap=arguments.bootstrap
+        data,
+        n_bootstrap=arguments.bootstrap,
+        seed=bootstrap_seed,
     )
     sensitivity = scaffold_sensitivity(data)
-    write_outputs(data, pairwise, configuration_rates, sensitivity, arguments.output)
+    write_outputs(
+        data,
+        pairwise,
+        configuration_rates,
+        sensitivity,
+        arguments.output,
+        input_path=arguments.input,
+        input_sha256=input_sha256,
+        n_bootstrap=arguments.bootstrap,
+        seed=bootstrap_seed,
+    )
 
 
 if __name__ == "__main__":

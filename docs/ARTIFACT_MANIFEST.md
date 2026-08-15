@@ -21,14 +21,15 @@
 - Primary benchmark set: CORE-Bench Hard, GAIA, SciCode, ScienceAgentBench, SWE-bench Verified Mini, TAU-bench Airline.
 - Excluded from primary transfer analysis: USACO, because it contains one HAL Generalist evaluation.
 - Minimum shared model configurations for a benchmark pair: 5.
-- Model unit: exact public `Models` string. Reasoning levels and dated releases are not collapsed into base-model identities.
+- Model unit: exact public `Models` display string paired within the exact public `Agent Name` display string. The displayed labels do not fully specify all benchmark-specific prompt, tool, budget, or harness details; they are not treated as controlled base-model identities.
 - Rank metrics: Spearman rho and Kendall tau-b.
-- Uncertainty: 5,000-resample percentile bootstrap over shared model configurations, fixed seed `20260816`.
-- Frontier definitions: weak Pareto for discrete selection; HAL-style origin-anchored convex hull for randomized-policy interpretation.
+- Uncertainty: 5,000-resample percentile configuration-resampling sensitivity intervals over shared displayed labels, fixed seed `20260816`; not rollout-level or population-model confidence intervals.
+- Frontier definitions: nondominated Pareto for discrete selection; HAL-inspired origin-anchored convex-hull reconstruction for randomized-policy interpretation.
 
 ## Interpretation constraints
 
 - Bootstrap intervals reflect sensitivity to the finite shared model-configuration set, not rollout-level variance.
 - The study does not estimate causal model/scaffold/workload variance components.
+- The public displayed labels do not fully encode benchmark-specific prompts, tools, budgets, or harness details; repeated labels are not controlled base-model identities.
 - Dollar cost should not be interpreted as token efficiency because the input CSV does not contain total-token usage.
 - Domain comparisons are exploratory because only three same-domain pairs are available in the primary cohort.

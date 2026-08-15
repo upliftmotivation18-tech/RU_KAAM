@@ -19,7 +19,7 @@ def weak_pareto_frontier(
     cost_column: str,
     accuracy_column: str,
 ) -> pd.Series:
-    """Return standard weak-Pareto membership for lower cost and higher accuracy.
+    """Return standard nondominated Pareto membership for lower cost and higher accuracy.
 
     A point is retained when no other observed point has at least its accuracy and
     at most its cost, with one comparison strict. This represents discrete agent
@@ -37,7 +37,7 @@ def weak_pareto_frontier(
         )
         membership.append(not bool(np.any(dominates)))
 
-    return pd.Series(membership, index=frame.index, name="weak_pareto")
+    return pd.Series(membership, index=frame.index, name="nondominated_pareto")
 
 
 def convex_hull_frontier(
@@ -46,12 +46,16 @@ def convex_hull_frontier(
     cost_column: str,
     accuracy_column: str,
 ) -> pd.Series:
-    """Reproduce HAL's origin-anchored cost--accuracy convex-hull frontier.
+    """Compute a HAL-inspired origin-anchored cost--accuracy hull reconstruction.
 
-    HAL's public analysis adds the origin and keeps points on the upper concave
-    envelope. It has a randomized-policy interpretation: an interior point can be
-    excluded when a probabilistic mixture of two other configurations yields at
-    least as much expected accuracy at no greater expected cost.
+    This implementation mirrors the publicly inspected reference algorithm's
+    origin inclusion, sorting, cross-product rule, and monotonicity filter. It is
+    intentionally called a reconstruction rather than an exact HAL internal
+    reproduction: it disagrees with two supplied ``Is Pareto`` labels in the
+    frozen CSV. The frontier has a randomized-policy interpretation: an interior
+    point can be excluded when a probabilistic mixture of two other
+    configurations yields at least as much expected accuracy at no greater
+    expected cost.
     """
     observed = frame[[cost_column, accuracy_column]].astype(float).to_numpy()
     points = np.vstack((np.array([[0.0, 0.0]]), observed))
@@ -111,11 +115,13 @@ def bootstrap_rank_correlation(
     n_bootstrap: int = 5_000,
     seed: int = 20260816,
 ) -> dict[str, float | int]:
-    """Estimate a percentile bootstrap interval over shared configurations.
+    """Compute a configuration-resampling interval for rank correlation.
 
-    The interval captures sensitivity to the finite set of shared configurations;
-    it is not a rollout-level uncertainty interval because most HAL rows are
-    single-run evaluations.
+    The percentile interval quantifies sensitivity to resampling the finite set
+    of shared, named HAL displayed model labels. It is not conventional sampling
+    uncertainty for a population of models and is not rollout-level uncertainty:
+    most HAL rows are single-run evaluations. Degenerate resamples without rank
+    variation are excluded and their count is returned explicitly.
     """
     first_values = np.asarray(first, dtype=float)
     second_values = np.asarray(second, dtype=float)
@@ -149,6 +155,7 @@ def bootstrap_rank_correlation(
         "ci_high": float(ci_high),
         "n": int(len(first_values)),
         "n_valid_bootstrap": int(len(bootstrap_values)),
+        "n_degenerate_bootstrap": int(n_bootstrap - len(bootstrap_values)),
     }
 
 

@@ -80,6 +80,8 @@ def test_bootstrap_rank_correlation_is_reproducible_with_seed():
     assert first_result == second_result
     assert first_result["n"] == 6
     assert first_result["estimate"] == pytest.approx(0.8285714285714287)
+    assert first_result["n_valid_bootstrap"] + first_result["n_degenerate_bootstrap"] == 200
+    assert first_result["n_degenerate_bootstrap"] >= 0
     assert first_result["ci_low"] <= first_result["estimate"] <= first_result["ci_high"]
 
 
