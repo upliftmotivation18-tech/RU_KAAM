@@ -6,7 +6,8 @@
 - [x] Workshop double-blind option enabled: `dblblindworkshop`.
 - [x] Workshop title set to `AgenticOS @ NeurIPS 2026`.
 - [x] Paper title, author block, and PDF metadata are anonymous.
-- [x] Main analysis code, figures, tables, data hash, source provenance, and reviewer robustness checks are documented.
+- [x] Main submission PDF is exactly 6 pages total; its 4 pages of technical content satisfy the AgenticOS regular-paper limit, with references and checklist following.
+- [x] Expanded robustness tables and reproduction materials are packaged in a separate anonymous supplement.
 - [x] Public URLs in references point to third-party papers/data sources rather than an author-controlled repository.
 - [x] Full paper compilation completes without LaTeX warnings or overfull boxes.
 - [x] Research test suite passes.
