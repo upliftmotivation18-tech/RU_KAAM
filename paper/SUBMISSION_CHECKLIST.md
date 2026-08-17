@@ -6,7 +6,7 @@
 - [x] Workshop double-blind option enabled: `dblblindworkshop`.
 - [x] Workshop title set to `AgenticOS @ NeurIPS 2026`.
 - [x] Paper title, author block, and PDF metadata are anonymous.
-- [x] Main analysis code, figures, tables, data hash, and source provenance are documented.
+- [x] Main analysis code, figures, tables, data hash, source provenance, and reviewer robustness checks are documented.
 - [x] Public URLs in references point to third-party papers/data sources rather than an author-controlled repository.
 - [x] Full paper compilation completes without LaTeX warnings or overfull boxes.
 - [x] Research test suite passes.
