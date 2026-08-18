@@ -10,3 +10,5 @@ paper/*.log
 paper/*.out
 paper/anonymous_supplement/stage/
 paper/supplement/stage/
+paper/supplement/__pycache__/
+paper/supplement/.pytest_cache/
