@@ -23,12 +23,12 @@ Use these files:
 Supplement SHA-256:
 
 ```text
-ed629deff018f8c77e4adb124eb5a11eb2232cdf77e771e2871851c0a7fac2b6
+75c15a167572c7261ebf44475c7cda31f1fa637096db70a3cc0fe4ebc4e754e2
 ```
 
 ## Why this package is safe for the limit
 
-The main PDF contains every claim needed to assess the contribution: data scope, raw-transfer result, cost-propensity confound result, frontier conclusion, and validity threats. The supplement supplies exhaustive tables, historical-pricing limitations, and reproduction material without being required to understand the main claim.
+The main PDF contains every claim needed to assess the contribution: data scope, raw-transfer result, cost-propensity confound result, aggregate success-adjusted efficiency result, frontier conclusion, and validity threats. The supplement supplies exhaustive tables, LOBO prediction outputs, denominator sensitivities, historical-pricing limitations, and reproduction material without being required to understand the main claim.
 
 ## Final portal check
 
