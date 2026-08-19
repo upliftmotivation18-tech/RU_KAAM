@@ -78,7 +78,7 @@ For leave-one-benchmark-out (LOBO) prediction, we hold out a benchmark, center l
 
 \subsection{Raw dollar-cost rank transfers, but residual cost rank does not}
 
-Across the six pairs with at least 12 shared labels, raw dollar-cost Spearman correlation ranges from 0.74 to 0.93, with mean 0.84. These associations survive the pre-specified raw-cost multiplicity and permutation checks. However, the pooled cost-propensity model explains 82.0\% of log-cost variation (adjusted \(R^2=72.7\%\)). After removing benchmark and displayed-label cost propensity, no high-overlap residual-cost rank association is significant under a 20,000-draw permutation test. The result is not that cost is irrelevant; it is that raw cost portability largely reflects a stable observed label-level component rather than demonstrated transferable trajectory behavior.
+Across the six pairs with at least 12 shared labels, raw dollar-cost Spearman correlation ranges from 0.74 to 0.93, with mean 0.84. These associations survive the pre-specified raw-cost multiplicity and permutation checks. The pooled cost-propensity model has 30 parameters on 86 rows, leaving 56 residual degrees of freedom; its \(R^2=82.0\%\) (adjusted \(R^2=72.7\%\)) is descriptive in-sample evidence rather than the primary portability test. After removing benchmark and displayed-label cost propensity, no high-overlap residual-cost rank association is significant under a 20,000-draw permutation test. LOBO prediction below supplies the held-out evidence.
 
 \begin{table}[t]
 \centering\small
@@ -88,7 +88,7 @@ Across the six pairs with at least 12 shared labels, raw dollar-cost Spearman co
 
 \subsection{Success adjustment is less portable}
 
-Across the same six high-overlap pairs, mean raw-cost rank correlation is 0.84 whereas mean CPS rank correlation under the 1\% floor is 0.59. CPS portability declines in five pairs. GAIA--SWE-mini changes from 0.89 for raw cost to 0.29 for CPS; CORE--SWE-mini changes from 0.74 to 0.32; SWE-mini--TAU changes from 0.82 to 0.45. CORE--TAU is an exception, with CPS 0.83 versus raw cost 0.78. Thus a label that is predictably cheap is not necessarily predictably cheap per expected success on a different workload.
+Across the same six high-overlap pairs, the CPS mean is 0.59 under the 1\% floor, compared with 0.84 for raw cost; this average is descriptive. CPS association survives 20,000-draw permutation testing and Holm correction only for CORE--GAIA (\(\rho=0.87\), 95\% sensitivity interval [0.63, 0.96]), CORE--TAU (0.83, [0.31, 1.00]), and GAIA--TAU (0.78, [0.42, 0.94]). The paired raw-minus-CPS difference is clearly positive only for GAIA--SWE-mini (0.60, 95\% interval [0.14, 1.13]). Other pairwise CPS estimates remain uncertain. Thus a label that is predictably cheap is not necessarily predictably cheap per expected success on a different workload.
 
 \begin{figure}[t]
 \centering

@@ -17,6 +17,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.run_analysis import GENERALIST, PRIMARY_BENCHMARKS, add_frontiers, load_data, verify_frozen_input
 from src.portability import cost_per_success, leave_one_benchmark_out_cost_prediction, lobo_rank_summary
+from src.cps_inference import bootstrap_rank_pair, holm_adjust, paired_raw_cps_contrast, permutation_rank_pair
 
 INPUT = ROOT / "data" / "all_leaderboards_costs_HAL.csv"
 OUT = ROOT / "outputs" / "aggregate_efficiency"
@@ -42,6 +43,42 @@ def pair_metric_correlations(data: pd.DataFrame, metric: str) -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def cps_inference(data: pd.DataFrame) -> pd.DataFrame:
+    """CPS pairwise sensitivity, permutation and raw-minus-CPS contrast inference."""
+    rows = []
+    for index, first_benchmark in enumerate(PRIMARY_BENCHMARKS):
+        for second_benchmark in PRIMARY_BENCHMARKS[index + 1 :]:
+            first = data[data["benchmark"].eq(first_benchmark)].set_index("model_configuration")
+            second = data[data["benchmark"].eq(second_benchmark)].set_index("model_configuration")
+            shared = sorted(set(first.index) & set(second.index))
+            if len(shared) < 5:
+                continue
+            cps_first = first.loc[shared, "cost_per_success_floor_1pct"].to_numpy(float)
+            cps_second = second.loc[shared, "cost_per_success_floor_1pct"].to_numpy(float)
+            raw_first = first.loc[shared, "total_cost"].to_numpy(float)
+            raw_second = second.loc[shared, "total_cost"].to_numpy(float)
+            seed = 20260818 + index * 100 + len(rows)
+            interval = bootstrap_rank_pair(cps_first, cps_second, n_resamples=10_000, seed=seed)
+            permutation = permutation_rank_pair(cps_first, cps_second, n_permutations=20_000, seed=seed)
+            contrast = paired_raw_cps_contrast(
+                raw_first, raw_second, cps_first, cps_second, n_resamples=10_000, seed=seed
+            )
+            rows.append(
+                {
+                    "benchmark_a": first_benchmark,
+                    "benchmark_b": second_benchmark,
+                    "n_shared": len(shared),
+                    **interval,
+                    **permutation,
+                    **{f"raw_minus_cps_{key}": value for key, value in contrast.items()},
+                }
+            )
+    output = pd.DataFrame(rows)
+    output["holm_adjusted_p"] = holm_adjust(output["permutation_p_two_sided"].to_numpy(float))
+    output["holm_reject_0_05"] = output["holm_adjusted_p"] < 0.05
+    return output
 
 
 def main() -> None:
@@ -74,6 +111,8 @@ def main() -> None:
     pair_metric_correlations(cohort, "cost_per_success_floor_5pct").to_csv(
         OUT / "cost_per_success_floor_5pct_pairs.csv", index=False
     )
+
+    cps_inference(cohort).to_csv(OUT / "cost_per_success_inference_1pct.csv", index=False)
 
     predictions = leave_one_benchmark_out_cost_prediction(
         cohort,

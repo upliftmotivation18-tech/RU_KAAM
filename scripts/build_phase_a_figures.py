@@ -56,13 +56,16 @@ plt.close(fig)
 lobo = pd.read_csv(OUT / "lobo_cost_rank_summary.csv")
 lobo["label"] = lobo["held_out_benchmark"].map(labels)
 lobo = lobo.sort_values("spearman_rho")
-fig, ax = plt.subplots(figsize=(6.7, 3.1), constrained_layout=True)
+fig, ax = plt.subplots(figsize=(6.7, 3.35), constrained_layout=True)
 colors = ["#D55E00" if p >= 0.05 else "#0072B2" for p in lobo["permutation_p_two_sided"]]
 ax.bar(lobo["label"], lobo["spearman_rho"], color=colors)
 ax.axhline(0, color="black", lw=0.8)
 for i, row in enumerate(lobo.itertuples()):
-    ax.text(i, row.spearman_rho + (0.04 if row.spearman_rho >= 0 else -0.07), f"{row.spearman_rho:.2f}\nN={row.n_predicted_labels}", ha="center", va="bottom" if row.spearman_rho >= 0 else "top", fontsize=7)
-ax.set_ylim(-0.85, 1.0)
+    if row.spearman_rho >= 0:
+        ax.text(i, row.spearman_rho + 0.035, f"{row.spearman_rho:.2f}\nN={row.n_predicted_labels}", ha="center", va="bottom", fontsize=7)
+    else:
+        ax.text(i, row.spearman_rho - 0.04, f"{row.spearman_rho:.2f}\nN={row.n_predicted_labels}", ha="center", va="top", fontsize=7)
+ax.set_ylim(-0.95, 1.12)
 ax.set_ylabel("LOBO predicted vs observed cost-rank $\\rho$")
 ax.set_title("Stable cost propensity predicts some held-out workloads, not all")
 fig.savefig(FIGURES / "lobo_cost_portability.pdf", bbox_inches="tight")
