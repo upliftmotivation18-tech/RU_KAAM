@@ -54,7 +54,7 @@ The only scaffold repeated broadly enough for the primary analysis is \texttt{HA
 
 \subsection{Metrics}
 
-For every benchmark pair with at least five shared labels, we compare ranks using Spearman \(\rho\) and Kendall \(\tau_b\). We report overlap \(N\). Pairwise rank intervals use 10,000 configuration-resampling draws, interpreted as finite-label sensitivity intervals rather than rollout uncertainty. Holm--Bonferroni correction is applied separately to 15 accuracy and 15 raw-cost tests.
+For every benchmark pair with at least five shared labels, we compare ranks using Spearman \(\rho\) and Kendall \(\tau_b\), reporting overlap \(N\). Pairwise rank intervals use 10,000 configuration-resampling draws. Raw-cost Holm--Bonferroni correction applies to 15 tests; CPS uses its own 20,000-draw permutation tests and Holm correction across 15 CPS tests. These quantify finite-label sensitivity, not rollout uncertainty.
 
 We define aggregate dollars per expected success as
 \[
