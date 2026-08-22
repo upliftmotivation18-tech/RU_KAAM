@@ -21,6 +21,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.trace_burden import matched_pairs, trajectory_metrics
+from src.v2_robustness import paired_effect_summary
 
 DATA = ROOT / "data" / "external" / "open_swe_traces"
 OUT = ROOT / "outputs" / "external_trace_study"
@@ -71,6 +72,7 @@ def paired_summary(pairs: pd.DataFrame) -> pd.DataFrame:
         hands = pairs[f"{metric}_openhands"].to_numpy(float)
         difference = hands - swe
         test = wilcoxon(difference, zero_method="wilcox", alternative="two-sided", method="auto")
+        effect = paired_effect_summary(swe, hands, n_resamples=10_000, seed=20260818 + len(rows))
         rows.append(
             {
                 "metric": metric,
@@ -81,6 +83,7 @@ def paired_summary(pairs: pd.DataFrame) -> pd.DataFrame:
                 "mean_openhands_minus_sweagent": float(np.mean(difference)),
                 "openhands_greater_fraction": float(np.mean(difference > 0)),
                 "wilcoxon_p": float(test.pvalue),
+                **effect,
             }
         )
     return pd.DataFrame(rows)

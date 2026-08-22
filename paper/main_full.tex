@@ -98,7 +98,7 @@ Across the same six high-overlap pairs, the CPS mean is 0.59 under the 1\% floor
 
 \subsection{LOBO identifies portable and nonportable raw-cost settings}
 
-Stable observed label propensity predicts held-out raw cost ranks for CORE-Bench Hard (\(\rho=0.78, N=14, p=0.0016\)), GAIA (\(\rho=0.87, N=16, p<0.0001\)), SWE-mini (\(\rho=0.90, N=16, p<0.0001\)), and TAU Airline (\(\rho=0.83, N=14, p=0.0004\)). It does not predict SciCode (\(\rho=-0.17,N=9,p=0.6801\)) or ScienceAgentBench (\(\rho=-0.64,N=7,p=0.1376\)). The latter estimates are sparse; they establish benchmark-specific heterogeneity rather than a scientific-domain causal explanation.
+In LOLO influence checks, the positive LOBO findings are not single-label artifacts: CORE remains \(\rho\in[0.73,0.91]\), GAIA [0.84,0.92], SWE-mini [0.88,0.92], and TAU [0.79,0.95] across every omission. SciCode is unstable ([-0.50,0.14]); ScienceAgentBench remains negative ([-0.77,-0.43]) but its original \(N=7\) test is non-significant. SciCode's mean accuracy is 2.1\% with 33.3\% zero-accuracy labels; ScienceAgentBench has the narrowest log-cost dispersion. These six-benchmark diagnostics are descriptive and do not identify a domain effect.
 
 \begin{figure}[t]
 \centering
@@ -120,7 +120,7 @@ The trace schema contains resolved status, message roles, explicit tool calls, m
 
 \subsection{Scaffold changes trajectory burden at fixed task and model}
 
-OpenHands has lower medians across the matched sample: 123 versus 149 trajectory turns, 61 versus 74 assistant turns, 61 versus 74 tool calls, and 176,708 versus 194,263 total trajectory characters. The corresponding paired Wilcoxon tests are significant (turns and tool calls \(p=1.9\times10^{-49}\); characters \(p=2.0\times10^{-12}\)). Resolved status has no detected paired difference (\(p=0.197\)). This evidence shows that, at fixed task and model in this external sample, scaffold choice can materially alter observable trajectory structure without a detected success difference. It does not claim lower token use, lower dollar cost, or a causal explanation of \hal{} cost rankings.
+OpenHands has lower matched medians: 123 versus 149 trajectory turns, 61 versus 74 assistant turns/tool calls, and 176,708 versus 194,263 total trajectory characters. The OpenHands/SWE-agent median ratio is 0.85 for turns (10,000-bootstrap interval [0.82,0.87]) and 0.85 for tool calls ([0.82,0.86]); OpenHands is lower on 69.7\% of pairs for each. Characters have ratio 0.95 ([0.92,0.98]) and are lower on 55.1\% of pairs. Resolved status has no detected paired difference (\(p=0.197\)). This supports a scaffold difference in observable trajectory structure, not lower tokens, dollar cost, or a causal explanation of \hal{} rankings.
 
 \begin{figure}[t]
 \centering
