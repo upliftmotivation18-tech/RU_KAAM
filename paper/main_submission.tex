@@ -36,17 +36,18 @@ The GAIA--SWE-mini comparison makes the issue concrete. Across 17 shared display
 
 We therefore ask three questions. First, when does an observed cost ranking predict a held-out workload? Second, does that ranking still travel after separating stable displayed-label cost propensity from benchmark cost level? Third, what can public traces say about the scaffold-level execution structure that aggregate leaderboards hide?
 
-\section{What we test, and what the data permit}
+\section{Why this is different from prior cost and benchmark work}
+
+This paper is an empirical evaluation study, not a new rank estimator. \citet{agentsmatter2024} established the importance of reporting accuracy and cost jointly and motivates the frontier perspective used here. \citet{ndzomga2026efficient} asks whether a smaller task subset preserves agent rankings within a benchmark; we instead ask whether an observed cost signal predicts a different workload. Benchmark$^2$ studies cross-benchmark rank consistency for static LLM benchmarks; our setting adds interactive scaffolds, dollar cost, success adjustment, and a held-out workload test. SWE-Effi examines resource effectiveness within software engineering; our result concerns the portability of public leaderboard signals across workloads. The matched Open-SWE extension does not claim to reproduce \hal{} cost measurements. It supplies separate, exact task--model evidence that scaffold choice can change observable trajectory burden.
 
 Our primary data are the public \texttt{all\_leaderboards\_costs\_HAL.csv} snapshot distributed with \citet{ndzomga2026efficient}: 242 displayed evaluations across nine benchmarks, 11 scaffolds, and 29 displayed model labels. The coverage determines the design. Most scaffolds appear on one workload only, so the data do not support a general model--scaffold--workload decomposition. We instead fix the displayed HAL Generalist Agent scaffold, match exact public model-label strings, and retain six workloads with enough repeated labels: CORE-Bench Hard, GAIA, SciCode, ScienceAgentBench, SWE-bench Verified Mini, and TAU-bench Airline. This cohort contains 86 rows. USACO has one Generalist observation and is excluded.
 
 The primary CSV supplies accuracy and aggregate dollar cost, but not token components, provider aliases, API calls, tool calls, retries, cache usage, or per-task trajectories. Accordingly, we do not call any adjustment ``price controlled,'' and we do not infer token or failure costs from dollars. Most evaluations are single-run, so rollout-level uncertainty is unavailable.
 
-For each benchmark pair with at least five shared labels, we compute Spearman \(\rho\) and Kendall \(\tau_b\). Pairwise sensitivity intervals use 10,000 configuration resamples. Raw-cost Holm correction applies to 15 tests. CostPerSuccess uses
-\[
+For each pair with at least five shared labels, we rank the same shared displayed labels by each metric. A configuration-resampling sensitivity interval is obtained by drawing \(N\) shared labels with replacement, keeping each draw's paired values together, and recomputing the statistic; 10,000 draws yield its 2.5th and 97.5th percentiles. It describes sensitivity to the finite observed label set, not a rollout-level confidence interval. Raw-cost Holm correction applies to 15 tests. CPS has its own 20,000-draw label-pairing permutation tests and Holm correction over 15 tests.\[
 \operatorname{CPS}_{i,b}(\epsilon)=\frac{C_{i,b}}{\max(A_{i,b},\epsilon)},
 \]
-where \(A\) is accuracy as a fraction and the primary floor is \(\epsilon=0.01\). CPS has separate 20,000-draw label-pairing permutation tests and Holm correction over 15 tests; 5\% and zero-exclusion versions are reported in the supplement. CPS is an aggregate dollars-per-expected-success proxy, not the mean cost of successful runs.
+where \(A\) is accuracy as a fraction and the primary floor is \(\epsilon=0.01\). The 5\% and zero-exclusion versions are reported in the supplement. CPS is an aggregate dollars-per-expected-success proxy, not the mean cost of successful runs.
 
 To test out-of-sample portability, we use leave-one-benchmark-out (LOBO) prediction. For each held-out workload, we estimate each label's centered log-cost propensity from the other workloads and predict the held-out cost rank. We also fit the descriptive pooled model
 \[
