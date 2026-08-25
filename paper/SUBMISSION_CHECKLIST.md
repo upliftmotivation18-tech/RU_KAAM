@@ -12,6 +12,7 @@
 - [x] Full paper compilation completes without LaTeX warnings or overfull boxes.
 - [x] Research test suite passes.
 - [x] Telemetry appendix completed in `main_full.tex`: fixed the placeholder MIMO round count (1,017 sessions / 4,690 rounds), added the MIMO error-cascade replication (4.33x vs TraceLab 4.29x), the tool-retry mechanism analysis (88.3% retry rate, 77.9% immediate-retry success, consecutive-error run median 1 / P90 3 / max 368), and a data-quality audit note (per-round MIMO usage is constant within every released session, so within-session dynamics are not analyzed).
+- [x] Failure-burden analysis integrated: figure (`failure_burden_discordant.pdf`), new subsection in `main_full.tex`, paragraph + figure + abstract hook in `main_submission.tex`. Both papers compile; submission remains exactly 6 pages.
 
 ## Before upload
 
