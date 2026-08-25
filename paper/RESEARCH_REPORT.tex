@@ -1,0 +1,322 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{tabularx}
+
+\title{Does Cost-Efficiency Travel?\\Comprehensive Research Report\\[4pt]
+\large All Findings, Analyses, Tests, and Artifacts}
+\author{Anonymous Author(s)}
+\date{August 26, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document consolidates every analysis, finding, dataset, test, figure, and
+commit produced during the preparation of the AgenticOS @ NeurIPS 2026
+submission. It is an internal reference, not a submission artifact.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%% ============================================================
+\section{Executive Summary}
+%% ============================================================
+
+\textbf{Paper title:} Does Cost-Efficiency Travel? What Agent Leaderboards Can Predict About Cost Across Workloads.
+
+\textbf{Venue:} AgenticOS Workshop, NeurIPS 2026 (double-blind, 6 pages + appendix).
+
+\textbf{Core thesis:} Every unconditioned aggregate we can compute from public agent data --- raw cost ranks, success-adjusted efficiency, failure premiums --- conflates which workloads were attempted with how agents behaved on them.
+
+\textbf{Three studies:}
+\begin{enumerate}[nosep]
+\item \textbf{Cost-rank portability:} Raw dollar-cost ranks transfer across HAL benchmarks (mean $\rho=0.84$) but are absorbed by stable displayed-label cost propensity ($R^2=82.0\%$, residual ranks insignificant). CPS is less portable (mean $\rho=0.59$).
+\item \textbf{Scaffold burden:} At fixed task and model, OpenHands uses 15\% fewer turns/tool calls than SWE-agent ($N=977$ matched pairs, $p=0.197$ for resolved status).
+\item \textbf{Failure-burden:} The ``expensive failure'' premium is not detected under exact task matching: 107 discordant pairs, failed side heavier only 47--52/107 ($p\geq0.25$), normalized ratio 0.98--1.06, MDE=15pp at 80\% power.
+\end{enumerate}
+
+\textbf{Key commits:}
+\begin{itemize}[nosep]
+\item \texttt{884303e} -- telemetry analysis (TraceLab deep, MIMO deep, Exgentic)
+\item \texttt{96efb88} -- complete telemetry appendix (MIMO replication, retry mechanism)
+\item \texttt{1a6af14} -- failure-burden discordant-pair analysis
+\item \texttt{c100d9a} -- output tables committed
+\item \texttt{1d33dd4} -- integration into both papers with figure
+\item \texttt{c0679bd} -- address five methodological weaknesses
+\end{itemize}
+
+%% ============================================================
+\section{Repository Structure}
+%% ============================================================
+
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Path & Description \\
+\midrule
+\texttt{cost-efficiency-travel/} & Main paper repo (this document) \\
+\texttt{efficient-benchmarking-ai-agents/} & Ndzomga's arXiv 2603.23749 (primary data source) \\
+\texttt{hal-paper-analysis/} & Qualitative (Docent) + quantitative HAL analysis \\
+\texttt{hal-harness/} & Official Princeton HAL harness (archived) \\
+\texttt{research\_cache/} & Reference papers: HAL, Efficient Benchmarking, SWE-Effi, Benchmark2 \\
+\texttt{workspace/trace-audit/} & Public trace dataset audit (cards + samples) \\
+\texttt{workspace/telemetry\_audit/} & Telemetry corpora (TraceLab DuckDB, MIMO 1{,}017 sessions, Exgentic) \\
+\texttt{hal\_audit.py/.txt} & First-pass HAL frontier/rank-correlation audit \\
+\bottomrule
+\end{tabularx}
+
+%% ============================================================
+\section{Datasets}
+%% ============================================================
+
+\subsection{On hand}
+
+\begin{tabularx}{\textwidth}{lXll}
+\toprule
+Dataset & What it is & Size & Status \\
+\midrule
+HAL leaderboard CSV & 242 evals, 9 benchmarks, 11 scaffolds, 29 labels & 140 KB & Used in paper \\
+Open-SWE-Traces & MiniMax-M2.5, OpenHands \& SWE-agent, exact task/model match & 851 MB & Used in paper \\
+TraceLab DuckDB & 8{,}058 real sessions, 665K rounds, 744K tool calls & 160 MB & Used in paper \\
+MIMO Claude Code & 1{,}017 sessions, 4{,}690 rounds, one model & 15 MB & Used in paper \\
+Exgentic OTel & Multi-benchmark/harness, no rewards & 50 MB & Audited only \\
+Nebius SWE-rebench & Model trajectories + patches & 5.6 GB & Audit card only \\
+ITBench & 105 SRE trajectories (IBM) & small & Audit card only \\
+TRAIL & 148 annotated error traces & gated & Not downloaded \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Reference papers in \texttt{research\_cache/}}
+
+\begin{itemize}[nosep]
+\item HAL: ``Holistic Agent Leaderboard'' (Kapoor et al., arXiv 2510.11977)
+\item Efficient Benchmarking: ``Efficient Benchmarking of AI Agents'' (Ndzomga, arXiv 2603.23749)
+\item SWE-Effi: ``Re-Evaluating Software AI Agent System Effectiveness'' (Fan et al., arXiv 2509.09853)
+\item Benchmark2: ``Systematic Evaluation of LLM Benchmarks'' (Qian et al., arXiv 2601.03986)
+\end{itemize}
+
+%% ============================================================
+\section{Primary HAL Study Results}
+%% ============================================================
+
+\subsection{Data and cohort}
+
+Frozen snapshot: 242 evaluations across 9 benchmarks, 11 scaffolds, 29 model labels. Fixed scaffold: HAL Generalist Agent. 6 benchmarks with $\geq5$ shared labels: CORE-Bench Hard, GAIA, SciCode, ScienceAgentBench, SWE-bench Verified Mini, TAU-bench Airline. Final cohort: 86 rows, 25 labels.
+
+\subsection{Cost-rank portability}
+
+\begin{itemize}[nosep]
+\item Raw dollar-cost Spearman $\rho$: 0.74--0.93 across high-overlap pairs (mean 0.84)
+\item All survive permutation + Holm correction
+\item Cost-propensity model: $R^2 = 82.0\%$ (adjusted 72.7\%), 30 parameters, 56 residual df
+\item After removing label+benchmark fixed effects: residual cost ranks insignificant everywhere
+\end{itemize}
+
+\subsection{Success-adjusted efficiency (CPS)}
+
+\begin{itemize}[nosep]
+\item Mean CPS $\rho = 0.59$ vs raw cost 0.84
+\item Survives permutation + Holm only for CORE--GAIA (0.87), CORE--TAU (0.83), GAIA--TAU (0.78)
+\item GAIA--SWE-mini: raw-vs-CPS gap 0.60 [0.14, 1.13]
+\end{itemize}
+
+\subsection{LOBO held-out prediction}
+
+\begin{itemize}[nosep]
+\item Succeeds: CORE ($\rho=0.78$), GAIA (0.87), SWE-mini (0.90), TAU (0.83)
+\item Fails: SciCode ($-0.17$), ScienceAgentBench ($-0.64$)
+\end{itemize}
+
+\subsection{Frontier membership}
+
+No label appears on all 6 frontiers under any definition (discrete, hull, 5\% tolerance). ``No universal winner'' is robust.
+
+%% ============================================================
+\section{External Matched Trace Study}
+%% ============================================================
+
+\subsection{Scaffold burden ($N=977$)}
+
+\begin{itemize}[nosep]
+\item OpenHands/SWE-agent median ratio: 0.85 for turns [0.82, 0.87], 0.85 for tool calls [0.82, 0.86]
+\item OpenHands lower on 69.7\% of pairs
+\item Resolved status: no detected difference ($p=0.197$)
+\end{itemize}
+
+\subsection{Failure-burden ($N=107$ discordant pairs)}
+
+\textbf{Naive cross-task view (replicates folklore):}
+\begin{itemize}[nosep]
+\item OpenHands: failed/resolved turns ratio 1.21 [1.07, 1.36]
+\item SWE-agent: turns 1.19 [1.07, 1.35], characters 1.33 [1.11, 1.54]
+\end{itemize}
+
+\textbf{Task-matched view (dissolves the premium):}
+\begin{itemize}[nosep]
+\item Sign test: failed side heavier 47--52/107 on every metric ($p\geq0.25$)
+\item Scaffold-normalized ratio: 0.98--1.06, CIs span 1
+\item MDE at 80\% power: p1=0.65 (15pp); observed 0.47--0.53 well below
+\item 95\% CI [0.37, 0.57] raw, [0.43, 0.63] normalized
+\end{itemize}
+
+\textbf{Power analysis (binomial test, $N=107$, $\alpha=0.05$):}
+\begin{itemize}[nosep]
+\item Critical values: reject if $k\leq42$ or $k\geq65$
+\item Power at p1=0.55: 0.14; p1=0.60: 0.48; p1=0.65: 0.85
+\item MDE at 80\% power: p1=0.65
+\end{itemize}
+
+\textbf{Scope:} One model (MiniMax-M2.5), four-shard nonrandom sample, character/turn proxies not tokens/dollars. Rules out strong premiums but not modest ones.
+
+%% ============================================================
+\section{Telemetry Appendix}
+%% ============================================================
+
+\subsection{TraceLab ($8{,}058$ sessions / $665{,}453$ rounds)}
+
+\begin{tabular}{lr}
+\toprule
+Metric & Value \\
+\midrule
+Median input / output tokens per round & 132{,}092 / 249 \\
+Mean cache-read share & 93.7\% \\
+Median context growth per session & 47{,}267 tokens \\
+Top 1\% input-token share & 48.3\% \\
+Next tool error after success / error & 4.9\% / 21.0\% (4.29$\times$) \\
+Errored calls with same-tool retry / retry succeeds & 88.3\% / 77.9\% \\
+Consecutive-error run length, median / P90 / max & 1 / 3 / 368 \\
+\bottomrule
+\end{tabular}
+
+\subsection{MIMO Claude Code ($1{,}017$ sessions / $4{,}690$ rounds)}
+
+\begin{tabular}{lr}
+\toprule
+Metric & Value \\
+\midrule
+Sessions with constant per-round usage & 1{,}017 / 1{,}017 (100\%) \\
+Corpus totals (uncached / cache-read / output) & 46.3M / 753.0M / 12.0M tokens \\
+Cross-session concentration (top 10\%) & 37.9\% of summed input \\
+Error cascade: P(error $\mid$ success) / P(error $\mid$ error) & 1.0\% / 4.3\% (4.33$\times$) \\
+\bottomrule
+\end{tabular}
+
+\textbf{Cross-source replication:} Error cascade ratios nearly identical: TraceLab 4.29$\times$, MIMO 4.33$\times$.
+
+\textbf{Data-quality audit:} Per-round usage is constant within every MIMO session. Within-session dynamics cannot be validated. Source used only for session counts, corpus totals, cross-session concentration, and content-derived error sequences.
+
+%% ============================================================
+\section{Figures and Tables}
+%% ============================================================
+
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+File & Content \\
+\midrule
+\texttt{figures/failure\_burden\_discordant.pdf} & Two-panel: naive premium (left) vs discordant null (right) \\
+\texttt{figures/rank\_transfer\_compact.pdf} & Pairwise rank transfer heatmap \\
+\texttt{figures/raw\_cost\_vs\_cost\_per\_success.pdf} & Raw-cost vs CPS rank scatter \\
+\texttt{figures/lobo\_cost\_portability.pdf} & LOBO predicted vs observed ranks \\
+\texttt{figures/matched\_trace\_burden.pdf} & Scaffold burden comparison (977 pairs) \\
+\texttt{figures/weak\_pareto\_membership.pdf} & Frontier membership rates \\
+\texttt{figures/tracelab\_tail\_error\_burden.pdf} & Tail concentration + error burden \\
+\texttt{figures/coverage\_heatmap.pdf} & Label coverage across benchmarks \\
+\texttt{appendix/telemetry\_anatomy.tex} & Cross-source summary table \\
+\texttt{appendix/tracelab\_key\_metrics.tex} + MIMO rows & TraceLab + MIMO key metrics \\
+\bottomrule
+\end{tabularx}
+
+%% ============================================================
+\section{Test Suite}
+%% ============================================================
+
+25 tests across 4 test files, all passing:
+
+\begin{itemize}[nosep]
+\item \texttt{test\_analysis.py} -- rank correlation, bootstrap, Pareto frontier
+\item \texttt{test\_portability.py} -- CPS, LOBO, effect sizes
+\item \texttt{test\_cps\_inference.py} -- permutation nulls, Holm correction
+\item \texttt{test\_pipeline.py} -- end-to-end pipeline hash check
+\end{itemize}
+
+Run command: \texttt{.venv/bin/python -m pytest -q}
+
+%% ============================================================
+\section{Scripts}
+%% ============================================================
+
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+Script & Purpose \\
+\midrule
+\texttt{run\_analysis.py} & End-to-end HAL pipeline (rank correlations, Pareto, bootstrap) \\
+\texttt{run\_price\_confound.py} & Log-cost two-way fixed-effects model \\
+\texttt{run\_aggregate\_efficiency.py} -- CPS and LOBO predictions \\
+\texttt{run\_external\_trace\_study.py} -- Matched Open-SWE burden analysis \\
+\texttt{run\_reviewer\_checks.py} -- Permutation nulls, Holm, frontier sensitivity \\
+\texttt{run\_v2\_robustness.py} -- Leave-one-label-out, paired bootstrap \\
+\texttt{run\_tracelab\_telemetry.py} -- TraceLab DuckDB scale/growth/errors \\
+\texttt{run\_tracelab\_deep.py} -- TraceLab position/concentration/cascade \\
+\texttt{run\_tracelab\_retry.py} -- Tool-retry behavior after errors \\
+\texttt{run\_mimo\_deep.py} -- MIMO session-level summaries (audit-aware) \\
+\texttt{run\_failure\_burden.py} -- Failure-burden discordant-pair analysis \\
+\texttt{build\_paper\_tables.py} -- LaTeX table generation \\
+\texttt{build\_telemetry\_figures.py} -- Telemetry figures + tables \\
+\texttt{build\_failure\_burden\_figure.py} -- Two-panel failure-burden figure \\
+\texttt{build\_compact\_figure.py} -- Compact rank-transfer figure \\
+\bottomrule
+\end{tabularx}
+
+%% ============================================================
+\section{Commits (chronological)}
+%% ============================================================
+
+\begin{longtable}{ll}
+\toprule
+Hash & Message \\
+\midrule
+\endhead
+\texttt{2dfa586} & fix: package six-page AgenticOS submission \\
+\texttt{fd2f2ec} & feat: add reviewer robustness analyses \\
+\texttt{b413072} & feat: add matched external trace burden study \\
+\texttt{2dfa586} & fix: package six-page AgenticOS submission \\
+\texttt{dfb9519} & feat: test model cost-propensity confound \\
+\texttt{c3f2c16} & docs: synchronize corrected paper artifacts \\
+\texttt{f9411bc} & docs: add grounded practitioner efficiency vignette \\
+\texttt{f08fddb} & feat: harden V2 robustness evidence \\
+\texttt{3f3229e} & docs: restructure submission around portability decision flow \\
+\texttt{dacd787} & docs: strengthen reviewer-facing positioning and safeguards \\
+\texttt{7018594} & docs: rebuild reviewer-hardened paper PDFs \\
+\texttt{f3ad151} & feat: add deep public telemetry audit \\
+\texttt{884303e} & feat: add sequence and tail telemetry analysis \\
+\texttt{96efb88} & feat: complete telemetry appendix with MIMO replication and retry mechanism \\
+\texttt{1a6af14} & feat: failure-cost premium dissolves under exact task matching \\
+\texttt{c100d9a} & chore: track failure-burden output tables \\
+\texttt{1d33dd4} & feat: integrate failure-burden finding into both papers with figure \\
+\texttt{c0679bd} & fix: address five methodological weaknesses \\
+\bottomrule
+\end{longtable}
+
+%% ============================================================
+\section{Remaining Pre-Upload Items}
+%% ============================================================
+
+\begin{enumerate}[nosep]
+\item Re-check AgenticOS OpenReview portal fields/policy
+\item Visual PDF review at 100\% zoom
+\item Supplement zip rebuild (predates telemetry/failure-burden additions)
+\item Anonymization verification before upload
+\item Deadline: August 29, 2026 AoE
+\end{enumerate}
+
+\end{document}
