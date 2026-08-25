@@ -36,7 +36,7 @@ Our contributions are:
 \begin{enumerate}[leftmargin=*,nosep]
 \item a fixed-scaffold, coverage-aware analysis of raw cost, success-adjusted cost, and frontier portability across six \hal{} workloads;
 \item held-out LOBO prediction and an observational displayed-label cost-propensity adjustment that separates persistent raw-cost structure from residual benchmark-specific structure;
-\item a matched external trace extension showing substantial scaffold differences in turns and tool calls at fixed task and model; and
+\item a matched external trace extension showing substantial scaffold differences in turns and tool calls at fixed task and model, and showing that the popular ``expensive failure'' premium dissolves under exact task matching; and
 \item a reproducible artifact with source hashes, sensitivity analyses, and explicit boundaries on unavailable token, price, retry, and failure-cost data.
 \end{enumerate}
 
@@ -75,6 +75,7 @@ where \(\alpha_i\) is a displayed-label fixed effect and \(\beta_b\) is a benchm
 For leave-one-benchmark-out (LOBO) prediction, we hold out a benchmark, center log cost within each training benchmark, average each label's centered cost over the remaining benchmarks, and predict the held-out rank. Labels must occur in at least two training workloads. We assess each held-out rank correlation with a 20,000-draw within-benchmark label-pairing permutation null.
 
 \section{Primary results}
+\label{sec:primary-results}
 
 \subsection{Raw dollar-cost rank transfers, but residual cost rank does not}
 
@@ -121,6 +122,11 @@ The trace schema contains resolved status, message roles, explicit tool calls, m
 \subsection{Scaffold changes trajectory burden at fixed task and model}
 
 OpenHands has lower matched medians: 123 versus 149 trajectory turns, 61 versus 74 assistant turns/tool calls, and 176,708 versus 194,263 total trajectory characters. The OpenHands/SWE-agent median ratio is 0.85 for turns (10,000-bootstrap interval [0.82,0.87]) and 0.85 for tool calls ([0.82,0.86]); OpenHands is lower on 69.7\% of pairs for each. Characters have ratio 0.95 ([0.92,0.98]) and are lower on 55.1\% of pairs. Resolved status has no detected paired difference (\(p=0.197\)). This supports a scaffold difference in observable trajectory structure, not lower tokens, dollar cost, or a causal explanation of \hal{} rankings.
+
+\subsection{Failure carries no burden premium at fixed task}
+\label{sec:failure-burden}
+
+The same sample tests a popular cost heuristic: comparing each scaffold's failed versus resolved trajectories across tasks, failures look 19--36\% heavier (turns ratio 1.21 [1.07,1.36] OpenHands, 1.19 [1.07,1.35] SWE-agent; trajectory characters up to 1.33), the ``expensive failure'' premium reported in prior resource-effectiveness work. Exact task matching dissolves it. Among the 107 discordant pairs --- identical task, identical model, one scaffold resolved, the other failed --- the failed side is heavier only 47--52 times out of 107 on every metric (two-sided binomial \(p\geq0.25\)), and after normalizing each trajectory by its own scaffold's median burden, the failed/resolved median ratio is 0.98--1.06 with sensitivity intervals spanning 1 throughout. Hard tasks make agents both burn more and fail; unconditioned failure-cost ratios therefore measure workload composition, not a property of failing runs. Failure-rate-times-premium accounting inherits exactly the composition problem documented for raw aggregate dollars in Section~\ref{sec:primary-results}.
 
 \begin{figure}[t]
 \centering
