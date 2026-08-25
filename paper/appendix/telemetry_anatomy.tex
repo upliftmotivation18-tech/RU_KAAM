@@ -1,0 +1,9 @@
+\begin{tabular}{lp{3cm}p{5cm}p{4cm}}
+\toprule
+Source & Sessions / rounds & Context/cache result & Scope \\
+\midrule
+TraceLab & 8,058 / 665,453 & 93.7\% mean cache-read share; median last/first context 3.6x & Real sessions; no task outcome or dollars \\
+MIMO Claude Code & 1,017 / 4,690 & 753M cache-read vs 46M uncached input; error cascade 4.33x after a tool error & One model; per-round usage constant within session; outcome unverified \\
+Open-SWE & 977 matched pairs & OpenHands/SWE-agent tool-call ratio 0.85 [0.82, 0.86] & Exact task/model match; no tokens or dollars \\
+\bottomrule
+\end{tabular}

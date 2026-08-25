@@ -14,3 +14,4 @@ paper/supplement/__pycache__/
 paper/supplement/.pytest_cache/
 data/external/open_swe_traces/*.parquet
 paper/supplement/agenticos_anonymous_supplement.zip
+.DS_Store

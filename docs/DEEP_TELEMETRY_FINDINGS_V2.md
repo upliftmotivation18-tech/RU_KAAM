@@ -10,7 +10,9 @@ Across session-position deciles, median input rises from 68,246 tokens in the fi
 
 ### MIMO
 
-Across 1,017 MIMO Claude Code sessions, median session usage is 19,775 uncached input tokens, 401,920 cache-read tokens, and 5,100 output tokens. Corpus totals are 46.3M uncached input, 753.0M cache-read, and 12.0M output tokens. Cache-read volume is 16.3x uncached input and 63.0x output.
+Across 1,017 MIMO Claude Code sessions (4,690 assistant rounds), median session usage is 19,775 uncached input tokens, 401,920 cache-read tokens, and 5,100 output tokens. Corpus totals are 46.3M uncached input, 753.0M cache-read, and 12.0M output tokens. Cache-read volume is 16.3x uncached input and 63.0x output.
+
+Data audit: in every released session the per-round usage block repeats one constant tuple (uncached input, cache creation, cache read, and output are identical across all rounds of a session). Within-session token dynamics therefore cannot be validated in this source; round-position growth and tool-result-to-input-growth analyses are deliberately not exported for MIMO (`outputs/mimo_deep/README.md`).
 
 ### Cross-source interpretation
 
@@ -36,6 +38,14 @@ Session burden rises sharply with observed tool-error count:
 | 6+ | 130 | 146 | 14.65M |
 
 The top 1% of token-heavy sessions average 105.8 tool errors, versus 3.37 for the other 99%. These are observational associations. Long sessions create more opportunities for errors, and errors may prolong sessions; direction cannot be identified without intervention/outcome data.
+
+### Retry mechanism
+
+Retrying after failure is the default behavior: of 35,453 errored tool calls, 88.3% are followed by another call to the same tool within the same session, and 77.9% of those immediate retries succeed (24,358 succeed versus 6,930 that err again). Per-call recovery is therefore common. The tail is not: consecutive-error runs have median length 1 but P90 length 3 and a maximum run of 368 consecutive errors in one session, and median successful-run length is 9 calls. This supplies the micro-mechanism behind the burden gradient: occasional recovered errors coexist with rare unrecovered spirals, and the spirals are where input volume concentrates.
+
+### MIMO replication
+
+The tool-error cascade replicates in the MIMO corpus from message-content flags (independent of the usage fields): the next tool call is erroneous 1.0% of the time after a success versus 4.3% after an error, a 4.33x conditional increase that closely mirrors the TraceLab 4.29x ratio. The burden gradient is directionally consistent: median session input rises from 0.40M tokens at zero observed tool errors to 0.94M at one and 1.12M at two to five. Cross-session concentration is much lower than TraceLab's (top 10% of sessions hold 37.9% of summed input versus 88.2%), so the heavy-tail magnitude is source dependent even though the qualitative pattern agrees.
 
 ## 4. Large tool outputs are a concrete context-growth channel
 

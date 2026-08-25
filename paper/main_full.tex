@@ -132,11 +132,45 @@ OpenHands has lower matched medians: 123 versus 149 trajectory turns, 61 versus 
 
 The combined results clarify what a cost-aware agent leaderboard can and cannot establish. Raw dollar-cost rankings are predictive for some held-out workloads, but their portability is largely associated with stable observed displayed-label cost propensity. CPS portability is weaker, so raw cheapness is not interchangeable with deployment efficiency. Independent matched traces further show that scaffolds change measurable execution structure, even when task and model are fixed.
 
-This is a secondary-data analysis with clear construct boundaries. The primary CSV has sparse, nonrandom coverage, mostly single-run rows, and public display labels that omit prompts, tools, budgets, and routing. Cost-propensity adjustment is not provider-price control. CPS is not successful-run cost. The external trace study is not merged with HAL, uses a nonrandom boundary sample, and uses burden proxies rather than billing fields. We cannot compute failure-cost ratios, tail dollar costs, tokens, cache usage, retries, or a true three-dimensional accuracy--cost--reliability frontier from public data. These limitations motivate public release of aggregate usage and outcome telemetry with leaderboard results.
+This is a secondary-data analysis with clear construct boundaries. The primary CSV has sparse, nonrandom coverage, mostly single-run rows, and public display labels that omit prompts, tools, budgets, and routing. Cost-propensity adjustment is not provider-price control. CPS is not successful-run cost. The external trace study is not merged with HAL, uses a nonrandom boundary sample, and uses burden proxies rather than billing fields. We cannot compute failure-cost ratios, tail dollar costs, tokens, cache usage, retries, or a true three-dimensional accuracy--cost--reliability frontier from public data. These limitations motivate public release of aggregate usage and outcome telemetry with leaderboard results; Appendix~\ref{app:telemetry} probes how far two public unencrypted telemetry corpora go toward that standard.
 
 \section{Conclusion}
 
 Observed dollar-cost portability is real in several high-overlap agent benchmark pairs, but it should not be read as a universal deployment-efficiency signal. It is partly persistent label-level cost propensity, weakens after success adjustment, and coexists with substantial scaffold differences in matched trajectory structure. Agent leaderboards should report not only accuracy and raw dollar cost, but also success-adjusted outcomes and trace-level usage fields needed to distinguish price, scaffold, and execution mechanisms.
+
+\appendix
+
+\section{Cross-source telemetry anatomy}
+\label{app:telemetry}
+
+The primary CSV reports dollars without usage components, and the \hal{} trace archives are encrypted. To probe how much anatomy public unencrypted telemetry can supply, we audited two independent coding-agent telemetry corpora. TraceLab contributes 8,058 real-world sessions comprising 665,453 LLM rounds and 743,819 tool calls; the MIMO Claude Code release contributes 1,017 sessions (4,690 rounds) from a single model label. Neither source exposes benchmark task outcomes or dollar billing, so all summaries are observational.
+
+Table~\ref{tab:tracelab-metrics} reports the TraceLab anatomy. Median rounds carry 132,092 input tokens against only 249 output tokens, with a 93.7\% mean cache-read share; median final-round context is \(3.6\times\) the initial round (P90 \(9.9\times\)). Resource burden is extremely heavy tailed: the top 1\% of sessions hold 48.3\% of summed input-token volume and the top 10\% hold 88.2\%. Tool errors also cluster: after a successful tool call the next call errs 4.9\% of the time, versus 21.0\% after an erroneous call, a \(4.29\times\) conditional increase. Retrying is the norm: 88.3\% of errored calls are followed by another call to the same tool in the same session, and 77.9\% of those immediate retries succeed. The failure tail is nevertheless pathological --- consecutive-error runs have median length 1 but P90 length 3 and a maximum of 368. Session burden rises steeply with observed error count, from a median of 0.34M summed input tokens at zero errors to 14.65M at six or more (Figure~\ref{fig:tail}).
+
+\begin{table}[h]
+\centering\small
+\caption{TraceLab key telemetry metrics.}
+\label{tab:tracelab-metrics}
+\input{appendix/tracelab_key_metrics.tex}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{figures/tracelab_tail_error_burden.pdf}
+\caption{TraceLab tail concentration and the observational association between observed tool-error counts and session input burden.}
+\label{fig:tail}
+\end{figure}
+
+The MIMO corpus replicates the error cascade at an independent site and model: the next tool call errs 4.3\% of the time after an error versus 1.0\% after a success, a \(4.33\times\) conditional increase that closely mirrors the TraceLab ratio, with the same directional burden gradient across error-count bins (median session input 0.40M, 0.94M, and 1.12M tokens at zero, one, and two to five errors). Two audit boundaries apply. First, in every released MIMO session the per-round usage block repeats one constant tuple, so within-session token dynamics cannot be validated in that source; we therefore use it only for counts, totals, cross-session concentration (top 10\% of sessions hold 37.9\% of summed input), and content-derived error sequences. Second, neither source links usage to task success or billing, so these are composition and association findings, not failure-cost measurements.
+
+\begin{table}[h]
+\centering\small
+\caption{Cross-source telemetry anatomy and scope boundaries.}
+\label{tab:anatomy}
+\input{appendix/telemetry_anatomy.tex}
+\end{table}
+
+Table~\ref{tab:anatomy} summarizes what each audited source can and cannot answer. TraceLab exposes token/cache/tool anatomy without outcomes; Open-SWE supplies exact task/model/scaffold matching with resolved status but no token or billing fields; \hal{} supplies outcome-linked dollars but encrypts traces. No public source we audited jointly exposes task, model, scaffold, outcome, token/cache use, retries, latency, and billing. The replicated anatomy makes the missing joint release concrete rather than hypothetical: context-carrying dominates inference volume, tails dominate aggregate burden, and tool-error spirals mark expensive sessions, but none of these can currently be attached to a leaderboard row.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
