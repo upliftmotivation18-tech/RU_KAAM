@@ -2,18 +2,14 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{booktabs}
 \usepackage{graphicx}
-\usepackage{hyperref}
-\usepackage{enumitem}
 \usepackage{amsmath}
 \usepackage{xcolor}
-\usepackage{listings}
 \usepackage{longtable}
 \usepackage{caption}
-\usepackage{float}
-\usepackage{tabularx}
+\usepackage{enumitem}
 
-\title{Does Cost-Efficiency Travel?\\Comprehensive Research Report\\[4pt]
-\large All Findings, Analyses, Tests, and Artifacts}
+\title{Does Cost-Efficiency Travel?\\[4pt]
+\large All Findings and Results}
 \author{Anonymous Author(s)}
 \date{August 26, 2026}
 
@@ -21,302 +17,394 @@
 \maketitle
 
 \begin{abstract}
-This document consolidates every analysis, finding, dataset, test, figure, and
-commit produced during the preparation of the AgenticOS @ NeurIPS 2026
-submission. It is an internal reference, not a submission artifact.
+This document collects every empirical finding from this paper in one place:
+what was measured, what the numbers are, and what they mean. It is written
+for readers who want the substance without the methodological scaffolding.
 \end{abstract}
 
-\tableofcontents
-\newpage
-
 %% ============================================================
-\section{Executive Summary}
+\section{The Central Question}
 %% ============================================================
 
-\textbf{Paper title:} Does Cost-Efficiency Travel? What Agent Leaderboards Can Predict About Cost Across Workloads.
+Agent leaderboards report task success and dollar cost. Practitioners pick a
+``cost-efficient'' system from one benchmark and assume it stays efficient
+elsewhere. We test that assumption.
 
-\textbf{Venue:} AgenticOS Workshop, NeurIPS 2026 (double-blind, 6 pages + appendix).
-
-\textbf{Core thesis:} Every unconditioned aggregate we can compute from public agent data --- raw cost ranks, success-adjusted efficiency, failure premiums --- conflates which workloads were attempted with how agents behaved on them.
-
-\textbf{Three studies:}
-\begin{enumerate}[nosep]
-\item \textbf{Cost-rank portability:} Raw dollar-cost ranks transfer across HAL benchmarks (mean $\rho=0.84$) but are absorbed by stable displayed-label cost propensity ($R^2=82.0\%$, residual ranks insignificant). CPS is less portable (mean $\rho=0.59$).
-\item \textbf{Scaffold burden:} At fixed task and model, OpenHands uses 15\% fewer turns/tool calls than SWE-agent ($N=977$ matched pairs, $p=0.197$ for resolved status).
-\item \textbf{Failure-burden:} The ``expensive failure'' premium is not detected under exact task matching: 107 discordant pairs, failed side heavier only 47--52/107 ($p\geq0.25$), normalized ratio 0.98--1.06, MDE=15pp at 80\% power.
-\end{enumerate}
-
-\textbf{Key commits:}
-\begin{itemize}[nosep]
-\item \texttt{884303e} -- telemetry analysis (TraceLab deep, MIMO deep, Exgentic)
-\item \texttt{96efb88} -- complete telemetry appendix (MIMO replication, retry mechanism)
-\item \texttt{1a6af14} -- failure-burden discordant-pair analysis
-\item \texttt{c100d9a} -- output tables committed
-\item \texttt{1d33dd4} -- integration into both papers with figure
-\item \texttt{c0679bd} -- address five methodological weaknesses
-\end{itemize}
+Three things get conflated in every unconditioned cost number: the model's
+price, the benchmark's difficulty, and the scaffold's execution behavior.
+Disentangling them is the paper's entire project.
 
 %% ============================================================
-\section{Repository Structure}
+\section{What We Studied}
 %% ============================================================
 
-\begin{tabularx}{\textwidth}{lX}
+\subsection{Primary data}
+
+242 agent evaluations from the Holistic Agent Leaderboard (HAL): 9 benchmarks,
+11 scaffolds, 29 model labels. Dollar cost and accuracy are available; tokens,
+retries, cache behavior, and per-task trajectories are not.
+
+The only scaffold repeated broadly enough is the HAL Generalist Agent. Six
+benchmarks have enough shared labels for analysis: CORE-Bench Hard, GAIA,
+SciCode, ScienceAgentBench, SWE-bench Verified Mini, and TAU-bench Airline.
+This gives 86 rows and 25 distinct model labels.
+
+\subsection{Matched trace data}
+
+977 exact task-model pairs from Open-SWE-Traces (NVIDIA): MiniMax-M2.5 under
+two scaffolds (OpenHands and SWE-agent) on identical tasks. Resolved status,
+trajectory turns, tool calls, and message characters are available. Tokens and
+dollars are not.
+
+\subsection{Telemetry data}
+
+Two public coding-agent telemetry corpora: TraceLab (8{,}058 real sessions,
+665{,}453 LLM rounds, 743{,}819 tool calls) and MIMO Claude Code (1{,}017
+sessions, 4{,}690 rounds, one model). Neither has task outcomes or billing.
+
+%% ============================================================
+\section{Finding 1: Raw Cost Ranks Transfer}
+%% ============================================================
+
+Across the six high-overlap benchmark pairs, raw dollar-cost Spearman
+correlations range from 0.74 to 0.93, with a mean of 0.84. All survive
+permutation testing and Holm correction.
+
+\begin{center}
+\begin{tabular}{lcc}
 \toprule
-Path & Description \\
+Benchmark pair & Shared labels & Spearman $\rho$ \\
 \midrule
-\texttt{cost-efficiency-travel/} & Main paper repo (this document) \\
-\texttt{efficient-benchmarking-ai-agents/} & Ndzomga's arXiv 2603.23749 (primary data source) \\
-\texttt{hal-paper-analysis/} & Qualitative (Docent) + quantitative HAL analysis \\
-\texttt{hal-harness/} & Official Princeton HAL harness (archived) \\
-\texttt{research\_cache/} & Reference papers: HAL, Efficient Benchmarking, SWE-Effi, Benchmark2 \\
-\texttt{workspace/trace-audit/} & Public trace dataset audit (cards + samples) \\
-\texttt{workspace/telemetry\_audit/} & Telemetry corpora (TraceLab DuckDB, MIMO 1{,}017 sessions, Exgentic) \\
-\texttt{hal\_audit.py/.txt} & First-pass HAL frontier/rank-correlation audit \\
-\bottomrule
-\end{tabularx}
-
-%% ============================================================
-\section{Datasets}
-%% ============================================================
-
-\subsection{On hand}
-
-\begin{tabularx}{\textwidth}{lXll}
-\toprule
-Dataset & What it is & Size & Status \\
-\midrule
-HAL leaderboard CSV & 242 evals, 9 benchmarks, 11 scaffolds, 29 labels & 140 KB & Used in paper \\
-Open-SWE-Traces & MiniMax-M2.5, OpenHands \& SWE-agent, exact task/model match & 851 MB & Used in paper \\
-TraceLab DuckDB & 8{,}058 real sessions, 665K rounds, 744K tool calls & 160 MB & Used in paper \\
-MIMO Claude Code & 1{,}017 sessions, 4{,}690 rounds, one model & 15 MB & Used in paper \\
-Exgentic OTel & Multi-benchmark/harness, no rewards & 50 MB & Audited only \\
-Nebius SWE-rebench & Model trajectories + patches & 5.6 GB & Audit card only \\
-ITBench & 105 SRE trajectories (IBM) & small & Audit card only \\
-TRAIL & 148 annotated error traces & gated & Not downloaded \\
-\bottomrule
-\end{tabularx}
-
-\subsection{Reference papers in \texttt{research\_cache/}}
-
-\begin{itemize}[nosep]
-\item HAL: ``Holistic Agent Leaderboard'' (Kapoor et al., arXiv 2510.11977)
-\item Efficient Benchmarking: ``Efficient Benchmarking of AI Agents'' (Ndzomga, arXiv 2603.23749)
-\item SWE-Effi: ``Re-Evaluating Software AI Agent System Effectiveness'' (Fan et al., arXiv 2509.09853)
-\item Benchmark2: ``Systematic Evaluation of LLM Benchmarks'' (Qian et al., arXiv 2601.03986)
-\end{itemize}
-
-%% ============================================================
-\section{Primary HAL Study Results}
-%% ============================================================
-
-\subsection{Data and cohort}
-
-Frozen snapshot: 242 evaluations across 9 benchmarks, 11 scaffolds, 29 model labels. Fixed scaffold: HAL Generalist Agent. 6 benchmarks with $\geq5$ shared labels: CORE-Bench Hard, GAIA, SciCode, ScienceAgentBench, SWE-bench Verified Mini, TAU-bench Airline. Final cohort: 86 rows, 25 labels.
-
-\subsection{Cost-rank portability}
-
-\begin{itemize}[nosep]
-\item Raw dollar-cost Spearman $\rho$: 0.74--0.93 across high-overlap pairs (mean 0.84)
-\item All survive permutation + Holm correction
-\item Cost-propensity model: $R^2 = 82.0\%$ (adjusted 72.7\%), 30 parameters, 56 residual df
-\item After removing label+benchmark fixed effects: residual cost ranks insignificant everywhere
-\end{itemize}
-
-\subsection{Success-adjusted efficiency (CPS)}
-
-\begin{itemize}[nosep]
-\item Mean CPS $\rho = 0.59$ vs raw cost 0.84
-\item Survives permutation + Holm only for CORE--GAIA (0.87), CORE--TAU (0.83), GAIA--TAU (0.78)
-\item GAIA--SWE-mini: raw-vs-CPS gap 0.60 [0.14, 1.13]
-\end{itemize}
-
-\subsection{LOBO held-out prediction}
-
-\begin{itemize}[nosep]
-\item Succeeds: CORE ($\rho=0.78$), GAIA (0.87), SWE-mini (0.90), TAU (0.83)
-\item Fails: SciCode ($-0.17$), ScienceAgentBench ($-0.64$)
-\end{itemize}
-
-\subsection{Frontier membership}
-
-No label appears on all 6 frontiers under any definition (discrete, hull, 5\% tolerance). ``No universal winner'' is robust.
-
-%% ============================================================
-\section{External Matched Trace Study}
-%% ============================================================
-
-\subsection{Scaffold burden ($N=977$)}
-
-\begin{itemize}[nosep]
-\item OpenHands/SWE-agent median ratio: 0.85 for turns [0.82, 0.87], 0.85 for tool calls [0.82, 0.86]
-\item OpenHands lower on 69.7\% of pairs
-\item Resolved status: no detected difference ($p=0.197$)
-\end{itemize}
-
-\subsection{Failure-burden ($N=107$ discordant pairs)}
-
-\textbf{Naive cross-task view (replicates folklore):}
-\begin{itemize}[nosep]
-\item OpenHands: failed/resolved turns ratio 1.21 [1.07, 1.36]
-\item SWE-agent: turns 1.19 [1.07, 1.35], characters 1.33 [1.11, 1.54]
-\end{itemize}
-
-\textbf{Task-matched view (dissolves the premium):}
-\begin{itemize}[nosep]
-\item Sign test: failed side heavier 47--52/107 on every metric ($p\geq0.25$)
-\item Scaffold-normalized ratio: 0.98--1.06, CIs span 1
-\item MDE at 80\% power: p1=0.65 (15pp); observed 0.47--0.53 well below
-\item 95\% CI [0.37, 0.57] raw, [0.43, 0.63] normalized
-\end{itemize}
-
-\textbf{Power analysis (binomial test, $N=107$, $\alpha=0.05$):}
-\begin{itemize}[nosep]
-\item Critical values: reject if $k\leq42$ or $k\geq65$
-\item Power at p1=0.55: 0.14; p1=0.60: 0.48; p1=0.65: 0.85
-\item MDE at 80\% power: p1=0.65
-\end{itemize}
-
-\textbf{Scope:} One model (MiniMax-M2.5), four-shard nonrandom sample, character/turn proxies not tokens/dollars. Rules out strong premiums but not modest ones.
-
-%% ============================================================
-\section{Telemetry Appendix}
-%% ============================================================
-
-\subsection{TraceLab ($8{,}058$ sessions / $665{,}453$ rounds)}
-
-\begin{tabular}{lr}
-\toprule
-Metric & Value \\
-\midrule
-Median input / output tokens per round & 132{,}092 / 249 \\
-Mean cache-read share & 93.7\% \\
-Median context growth per session & 47{,}267 tokens \\
-Top 1\% input-token share & 48.3\% \\
-Next tool error after success / error & 4.9\% / 21.0\% (4.29$\times$) \\
-Errored calls with same-tool retry / retry succeeds & 88.3\% / 77.9\% \\
-Consecutive-error run length, median / P90 / max & 1 / 3 / 368 \\
+GAIA -- SWE-mini & 17 & 0.89 \\
+CORE -- GAIA & 14 & 0.93 \\
+CORE -- TAU & 14 & 0.88 \\
+GAIA -- TAU & 13 & 0.93 \\
+CORE -- SWE-mini & 12 & 0.74 \\
+SWE-mini -- TAU & 12 & 0.86 \\
 \bottomrule
 \end{tabular}
+\end{center}
 
-\subsection{MIMO Claude Code ($1{,}017$ sessions / $4{,}690$ rounds)}
-
-\begin{tabular}{lr}
-\toprule
-Metric & Value \\
-\midrule
-Sessions with constant per-round usage & 1{,}017 / 1{,}017 (100\%) \\
-Corpus totals (uncached / cache-read / output) & 46.3M / 753.0M / 12.0M tokens \\
-Cross-session concentration (top 10\%) & 37.9\% of summed input \\
-Error cascade: P(error $\mid$ success) / P(error $\mid$ error) & 1.0\% / 4.3\% (4.33$\times$) \\
-\bottomrule
-\end{tabular}
-
-\textbf{Cross-source replication:} Error cascade ratios nearly identical: TraceLab 4.29$\times$, MIMO 4.33$\times$.
-
-\textbf{Data-quality audit:} Per-round usage is constant within every MIMO session. Within-session dynamics cannot be validated. Source used only for session counts, corpus totals, cross-session concentration, and content-derived error sequences.
+A practitioner using a GAIA-like leaderboard to rank raw spend for a SWE-like
+workload would get a useful prior.
 
 %% ============================================================
-\section{Figures and Tables}
+\section{Finding 2: But the Signal Is Mostly Label Propensity}
 %% ============================================================
 
-\begin{tabularx}{\textwidth}{lX}
-\toprule
-File & Content \\
-\midrule
-\texttt{figures/failure\_burden\_discordant.pdf} & Two-panel: naive premium (left) vs discordant null (right) \\
-\texttt{figures/rank\_transfer\_compact.pdf} & Pairwise rank transfer heatmap \\
-\texttt{figures/raw\_cost\_vs\_cost\_per\_success.pdf} & Raw-cost vs CPS rank scatter \\
-\texttt{figures/lobo\_cost\_portability.pdf} & LOBO predicted vs observed ranks \\
-\texttt{figures/matched\_trace\_burden.pdf} & Scaffold burden comparison (977 pairs) \\
-\texttt{figures/weak\_pareto\_membership.pdf} & Frontier membership rates \\
-\texttt{figures/tracelab\_tail\_error\_burden.pdf} & Tail concentration + error burden \\
-\texttt{figures/coverage\_heatmap.pdf} & Label coverage across benchmarks \\
-\texttt{appendix/telemetry\_anatomy.tex} & Cross-source summary table \\
-\texttt{appendix/tracelab\_key\_metrics.tex} + MIMO rows & TraceLab + MIMO key metrics \\
-\bottomrule
-\end{tabularx}
+A pooled model---$\log C_{i,b} = \mu + \alpha_i + \beta_b + \epsilon_{i,b}$,
+where $\alpha_i$ is a displayed-label fixed effect and $\beta_b$ is a
+benchmark effect---explains 82.0\% of observed cost variation (adjusted
+$R^2 = 72.7\%$) on 86 rows with 30 parameters.
+
+After removing label and benchmark cost propensity, \textbf{no residual-cost
+rank association is significant} under a 20{,}000-draw permutation test.
+
+The portable raw-cost signal is largely a stable observed label-level
+component. The public data cannot identify whether that component comes from
+provider pricing, reasoning settings, routing, token behavior, or cache
+treatment.
 
 %% ============================================================
-\section{Test Suite}
+\section{Finding 3: Success Adjustment Changes the Ranking}
 %% ============================================================
 
-25 tests across 4 test files, all passing:
+Aggregate dollars per expected success (CPS) reorders labels: mean CPS
+correlation is 0.59, compared with 0.84 for raw cost. Only three CPS
+associations survive permutation testing and Holm correction:
 
 \begin{itemize}[nosep]
-\item \texttt{test\_analysis.py} -- rank correlation, bootstrap, Pareto frontier
-\item \texttt{test\_portability.py} -- CPS, LOBO, effect sizes
-\item \texttt{test\_cps\_inference.py} -- permutation nulls, Holm correction
-\item \texttt{test\_pipeline.py} -- end-to-end pipeline hash check
+\item CORE--GAIA: $\rho = 0.87$, 95\% interval [0.63, 0.96]
+\item CORE--TAU: 0.83, [0.31, 1.00]
+\item GAIA--TAU: 0.78, [0.42, 0.94]
 \end{itemize}
 
-Run command: \texttt{.venv/bin/python -m pytest -q}
+The clearest gap is GAIA--SWE-mini: raw cost exceeds CPS correlation by 0.60,
+with a 95\% interval [0.14, 1.13]. A label that is predictably cheap is not
+necessarily predictably cheap per expected success on a different workload.
 
 %% ============================================================
-\section{Scripts}
+\section{Finding 4: Held-Out Prediction Works for Four Workloads}
 %% ============================================================
 
-\begin{tabularx}{\textwidth}{lX}
+Leave-one-benchmark-out (LOBO) prediction: learn each label's cost propensity
+from the other workloads, predict the held-out cost rank.
+
+\textbf{Strong prediction:}
+\begin{itemize}[nosep]
+\item CORE: $\rho = 0.78$, $N = 14$, $p = 0.0016$
+\item GAIA: 0.87, $N = 16$, $p < 0.0001$
+\item SWE-mini: 0.90, $N = 16$, $p < 0.0001$
+\item TAU: 0.83, $N = 14$, $p = 0.0004$
+\end{itemize}
+
+Leave-one-label-out ranges remain positive for every omission.
+
+\textbf{Failed prediction:}
+\begin{itemize}[nosep]
+\item SciCode: unstable, $[-0.50, 0.14]$
+\item ScienceAgentBench: directionally negative, $[-0.77, -0.43]$
+\end{itemize}
+
+SciCode has very low mean accuracy (2.1\%) and one-third zero-accuracy labels.
+ScienceAgentBench has the narrowest log-cost dispersion.
+
+%% ============================================================
+\section{Finding 5: No Universal Cost-Accuracy Winner}
+%% ============================================================
+
+No label tested on at least five benchmarks appears on every accuracy-cost
+frontier under any of three definitions: discrete nondominance, the HAL-inspired
+hull, or a 5\% tolerance. The stronger claim that no label appears on more than
+4/6 frontiers fails under tolerance: o4-mini Low reaches 5/6. We retain only
+the non-universal-winner conclusion.
+
+%% ============================================================
+\section{Finding 6: Scaffolds Change Execution Burden}
+%% ============================================================
+
+Across 977 matched task-model pairs (MiniMax-M2.5), OpenHands uses
+substantially fewer resources than SWE-agent at the same task:
+
+\begin{center}
+\begin{tabular}{lccc}
 \toprule
-Script & Purpose \\
+Metric & SWE-agent median & OpenHands median & Ratio (OH/SA) \\
 \midrule
-\texttt{run\_analysis.py} & End-to-end HAL pipeline (rank correlations, Pareto, bootstrap) \\
-\texttt{run\_price\_confound.py} & Log-cost two-way fixed-effects model \\
-\texttt{run\_aggregate\_efficiency.py} -- CPS and LOBO predictions \\
-\texttt{run\_external\_trace\_study.py} -- Matched Open-SWE burden analysis \\
-\texttt{run\_reviewer\_checks.py} -- Permutation nulls, Holm, frontier sensitivity \\
-\texttt{run\_v2\_robustness.py} -- Leave-one-label-out, paired bootstrap \\
-\texttt{run\_tracelab\_telemetry.py} -- TraceLab DuckDB scale/growth/errors \\
-\texttt{run\_tracelab\_deep.py} -- TraceLab position/concentration/cascade \\
-\texttt{run\_tracelab\_retry.py} -- Tool-retry behavior after errors \\
-\texttt{run\_mimo\_deep.py} -- MIMO session-level summaries (audit-aware) \\
-\texttt{run\_failure\_burden.py} -- Failure-burden discordant-pair analysis \\
-\texttt{build\_paper\_tables.py} -- LaTeX table generation \\
-\texttt{build\_telemetry\_figures.py} -- Telemetry figures + tables \\
-\texttt{build\_failure\_burden\_figure.py} -- Two-panel failure-burden figure \\
-\texttt{build\_compact\_figure.py} -- Compact rank-transfer figure \\
+Trajectory turns & 149 & 123 & 0.85 [0.82, 0.87] \\
+Assistant turns / tool calls & 74 & 61 & 0.85 [0.82, 0.86] \\
+Total characters & 194{,}263 & 176{,}708 & 0.95 [0.92, 0.98] \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
+\end{center}
+
+OpenHands is lower on 69.7\% of pairs for turns and tool calls. Resolved
+status has no detected difference ($p = 0.197$).
 
 %% ============================================================
-\section{Commits (chronological)}
+\section{Finding 7: The Failure-Cost Premium Is a Composition Artifact}
 %% ============================================================
 
-\begin{longtable}{ll}
+This is the paper's most counterintuitive finding.
+
+\textbf{The naive view (what prior work reports):} Comparing each scaffold's
+failed versus resolved trajectories across tasks, failures look 19--36\%
+heavier. OpenHands turns ratio: 1.21 [1.07, 1.36]. SWE-agent trajectory
+characters: 1.33 [1.11, 1.54]. This matches the ``expensive failure'' claim
+in prior resource-effectiveness work.
+
+\textbf{The task-matched view (what happens when you hold the task fixed):}
+Among 107 pairs where one scaffold resolved and the other failed on the
+\emph{identical} task:
+
+\begin{itemize}[nosep]
+\item The failed side is heavier only 47--52 times out of 107 on every metric
+  ($p \geq 0.25$, two-sided binomial)
+\item After normalizing each trajectory by its own scaffold's median burden,
+  the failed/resolved ratio is 0.98--1.06 with intervals spanning 1
+\item 95\% confidence intervals: [0.37, 0.57] raw, [0.43, 0.63] normalized
+\end{itemize}
+
+\textbf{Power analysis:} With 107 pairs, a two-sided binomial test at
+$\alpha = 0.05$ has 80\% power to detect a premium fraction of 0.65 or larger
+(failed heavier on 70+ pairs). The observed 0.47--0.53 falls well below this
+threshold, ruling out strong premiums ($>$15 percentage points) but not modest
+ones.
+
+\textbf{Interpretation:} Hard tasks make agents both burn more and fail. The
+observed cross-task ``failure premium'' is explained by which tasks failed, not
+by failure adding burden. Unconditioned failure-cost ratios measure workload
+composition, not a property of failing runs.
+
+\textbf{Scope:} One model (MiniMax-M2.5), four-shard nonrandom sample,
+character/turn proxies not tokens or dollars.
+
+%% ============================================================
+\section{Finding 8: Agent Inference Is Context-Dominated}
+%% ============================================================
+
+Across two independent telemetry sources, observable inference volume is
+dominated by repeated carried context, not fresh generation.
+
+\textbf{TraceLab (real sessions):}
+\begin{itemize}[nosep]
+\item Median round: 132{,}092 input tokens, 249 output tokens
+\item Mean cache-read share: 93.7\%
+\item Median session context growth: 47{,}267 tokens; P90 205{,}248
+\item Median final-round context: $3.6\times$ initial (P90 $9.9\times$)
+\end{itemize}
+
+\textbf{MIMO Claude Code (one model):}
+\begin{itemize}[nosep]
+\item Corpus totals: 46.3M uncached input, 753.0M cache-read, 12.0M output
+  tokens
+\item Cache-read volume is $16.3\times$ uncached input
+\end{itemize}
+
+A benchmark's single dollar total hides whether spending comes from model
+price, cache policy, context growth, or fresh generation.
+
+%% ============================================================
+\section{Finding 9: Error Burden Is Heavy Tailed}
+%% ============================================================
+
+In TraceLab:
+
+\begin{center}
+\begin{tabular}{lccc}
 \toprule
-Hash & Message \\
+Observed tool errors & Median rounds & Median tool calls & Median summed input \\
 \midrule
-\endhead
-\texttt{2dfa586} & fix: package six-page AgenticOS submission \\
-\texttt{fd2f2ec} & feat: add reviewer robustness analyses \\
-\texttt{b413072} & feat: add matched external trace burden study \\
-\texttt{2dfa586} & fix: package six-page AgenticOS submission \\
-\texttt{dfb9519} & feat: test model cost-propensity confound \\
-\texttt{c3f2c16} & docs: synchronize corrected paper artifacts \\
-\texttt{f9411bc} & docs: add grounded practitioner efficiency vignette \\
-\texttt{f08fddb} & feat: harden V2 robustness evidence \\
-\texttt{3f3229e} & docs: restructure submission around portability decision flow \\
-\texttt{dacd787} & docs: strengthen reviewer-facing positioning and safeguards \\
-\texttt{7018594} & docs: rebuild reviewer-hardened paper PDFs \\
-\texttt{f3ad151} & feat: add deep public telemetry audit \\
-\texttt{884303e} & feat: add sequence and tail telemetry analysis \\
-\texttt{96efb88} & feat: complete telemetry appendix with MIMO replication and retry mechanism \\
-\texttt{1a6af14} & feat: failure-cost premium dissolves under exact task matching \\
-\texttt{c100d9a} & chore: track failure-burden output tables \\
-\texttt{1d33dd4} & feat: integrate failure-burden finding into both papers with figure \\
-\texttt{c0679bd} & fix: address five methodological weaknesses \\
+0 & 9 & 14 & 0.34M \\
+1 & 16 & 23 & 0.74M \\
+2--5 & 30 & 39 & 1.63M \\
+6+ & 130 & 146 & 14.65M \\
 \bottomrule
-\end{longtable}
+\end{tabular}
+\end{center}
+
+The top 1\% of sessions hold 48.3\% of summed input tokens. The top 10\% hold
+88.2\%.
 
 %% ============================================================
-\section{Remaining Pre-Upload Items}
+\section{Finding 10: Error Spirals and Retry Behavior}
+%% ============================================================
+
+\textbf{Cascade:} After a successful tool call, the next call errs 4.9\% of
+the time. After an erroneous call, 21.0\% ($4.29\times$ conditional increase).
+
+\textbf{Retry:} 88.3\% of errored tool calls are followed by another call to
+the same tool in the same session. 77.9\% of those immediate retries succeed.
+Per-call recovery is common.
+
+\textbf{Spiral tails:} Consecutive-error runs have median length 1 but P90
+length 3 and a maximum of 368. Median successful run length is 9.
+
+\textbf{Cross-source replication:} The MIMO corpus replicates the cascade
+ratio almost exactly: 4.3\% after an error versus 1.0\% after a success
+($4.33\times$), despite a different model and source.
+
+%% ============================================================
+\section{Finding 11: Tool Failures Are Slower and Less Informative}
+%% ============================================================
+
+Across 743{,}819 TraceLab tool calls:
+
+\begin{itemize}[nosep]
+\item Successful calls: median latency 140 ms, median result 602 characters
+\item Failed calls: median latency 313 ms, median result 208 characters
+\item P95 latency: 85.6s (failed) vs 15.8s (success)
+\end{itemize}
+
+Failures consume more wall time while yielding less information.
+
+%% ============================================================
+\section{Finding 12: Large Tool Outputs Grow Context}
+%% ============================================================
+
+When the current round contains under 1k tool-result characters, median
+next-input growth is 443 tokens. For 1k--10k characters it is 1{,}412 tokens;
+for over 10k it is 5{,}420 tokens. Tool verbosity is a concrete mechanism
+linking tool use to subsequent context burden.
+
+%% ============================================================
+\section{Finding 13: MIMO Has a Data-Quality Issue}
+%% ============================================================
+
+In every one of the 1{,}017 released MIMO sessions, the per-round usage block
+repeats one constant tuple: identical uncached input, cache creation, cache
+read, and output across all rounds of a session. Within-session token dynamics
+cannot be validated in this source.
+
+The source is still useful for session counts, corpus totals, cross-session
+concentration (top 10\% hold 37.9\% of summed input), and content-derived
+error sequences. It is not usable for round-level growth analysis.
+
+%% ============================================================
+\section{Finding 14: Public Telemetry Is Fragmented}
+%% ============================================================
+
+No public source jointly exposes task, model, scaffold, outcome, tokens, cache
+use, retries, latency, and billing.
+
+\begin{center}
+\begin{tabular}{p{2cm}p{5cm}p{5cm}}
+\toprule
+Source & Has & Lacks \\
+\midrule
+HAL & Accuracy, dollar cost, task, model, scaffold & Tokens, traces, retries \\
+TraceLab & Tokens, cache, tools, sessions & Task outcomes, dollars \\
+MIMO & Tokens, cache, tools, sessions & Task outcomes, dollars, round fidelity \\
+Open-SWE & Task, model, scaffold, resolved status & Tokens, dollars \\
+Exgentic & Multi-benchmark usage, OTel spans & Rewards, task matching \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This fragmentation motivates a minimum public telemetry standard for agent
+leaderboards.
+
+%% ============================================================
+\section{All Figures}
 %% ============================================================
 
 \begin{enumerate}[nosep]
-\item Re-check AgenticOS OpenReview portal fields/policy
-\item Visual PDF review at 100\% zoom
-\item Supplement zip rebuild (predates telemetry/failure-burden additions)
-\item Anonymization verification before upload
-\item Deadline: August 29, 2026 AoE
+\item \textbf{Failure burden, discordant pairs} -- Two panels: naive
+  cross-task ratios (left) vs discordant-sign fractions (right). The premium
+  vanishes at fixed task.
+
+\item \textbf{Rank transfer, compact} -- Pairwise Spearman correlations across
+  benchmark pairs for raw cost and CPS.
+
+\item \textbf{Raw cost vs cost per success} -- Scatter showing how CPS
+  reorders labels compared with raw cost.
+
+\item \textbf{LOBO cost portability} -- Predicted vs observed ranks for four
+  held-out workloads.
+
+\item \textbf{Matched trace burden} -- OpenHands vs SWE-agent medians on log
+  scale for turns, tool calls, and characters.
+
+\item \textbf{Weak Pareto membership} -- Per-label frontier presence across
+  benchmarks.
+
+\item \textbf{TraceLab tail and error burden} -- Top-1\%/10\% concentration
+  bar chart and error-bin burden scatter.
+
+\item \textbf{Coverage heatmap} -- Label presence across benchmarks and
+  scaffolds.
 \end{enumerate}
+
+%% ============================================================
+\section{Tests}
+%% ============================================================
+
+25 tests pass across rank correlations, bootstrap intervals, CPS inference,
+Holm correction, LOBO prediction, and the end-to-end pipeline hash check.
+One warning (constant-input Spearman for extreme-pair CPS tests) is expected.
+
+%% ============================================================
+\section{Summary}
+%% ============================================================
+
+The paper's thesis is now supported by three independent lines of evidence:
+
+\begin{enumerate}[nosep]
+\item \textbf{Cost ranks transfer, but it is mostly label propensity.} The
+  portable signal is real ($\rho = 0.74$--$0.93$) but largely absorbed by a
+  fixed-effects model; residual ranks are insignificant.
+
+\item \textbf{Success adjustment changes the ranking.} CPS is less portable
+  (mean $\rho = 0.59$), and only three pairs survive correction.
+
+\item \textbf{The failure-cost premium is a composition artifact.} At fixed
+  task and model, failed trajectories carry the same burden as successful ones.
+  Hard tasks make agents burn more and fail; unconditioned failure-cost ratios
+  measure workload composition.
+\end{enumerate}
+
+Every unconditioned aggregate---raw cost, success-adjusted efficiency, failure
+premiums---conflates which workloads were attempted with how agents behaved on
+them.
 
 \end{document}
