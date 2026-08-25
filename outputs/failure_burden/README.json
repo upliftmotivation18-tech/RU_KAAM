@@ -1,0 +1,11 @@
+{
+  "source": "nvidia/Open-SWE-Traces four-shard MiniMax-M2.5 boundary sample",
+  "n_matched_pairs": 977,
+  "n_pairs_with_known_outcomes": 771,
+  "design": [
+    "per-scaffold failed/resolved ratios are cross-task (task difficulty confounds)",
+    "discordant-pair sign tests compare scaffolds on the IDENTICAL task",
+    "burden proxies are character/turn counts, not tokens or dollars"
+  ],
+  "prohibited_interpretation": "dollar failure-cost ratio; causal effect of failure on spend"
+}
