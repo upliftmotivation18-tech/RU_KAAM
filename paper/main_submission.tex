@@ -30,7 +30,6 @@
 Toward a Telemetry Layer for AgenticOS}
 \author{Anonymous Author(s)}
 \begin{document}
-\footnotesize
 \maketitle
 
 \begin{abstract}
@@ -124,7 +123,7 @@ OpenHands has lower matched medians: 123 vs.\ 149 trajectory turns (ratio $0.85$
 \end{figure}
 
 \subsection{The ``expensive failure'' premium is not detected under exact task matching}
-Comparing failed vs.\ resolved trajectories \emph{across} tasks reproduces SWE-Effi's pattern ($19$--$36\%$ heavier failures). But among the \textbf{107 discordant pairs}---identical task and model, one scaffold resolved and the other failed---the failed side is heavier only 47--52 of 107 on every metric (binomial $p{\geq}0.25$). An $80\%$-power pre-specified test against premiums ${\geq}15$pp finds the observed $0.44$--$0.49$ uninformative for smaller effects; one model and a nonrandom sample bound the claim.
+Comparing failed vs.\ resolved trajectories \emph{across} tasks reproduces SWE-Effi's pattern ($19$--$36\%$ heavier failures). But among the \textbf{107 discordant pairs}---identical task and model, one scaffold resolved and the other failed---the failed side is heavier only 47--52 of 107 on every metric (binomial $p{\geq}0.25$). A pre-specified power calculation gives 80\% power against a premium fraction ${\geq}0.65$; the observed $0.44$--$0.49$ does not resolve smaller effects ($<15$pp).
 
 \textbf{Interpretation:} hard tasks make agents both burn more \emph{and} fail more. An unconditioned failure multiplier measures \emph{which tasks were attempted}, not a property of failing runs. Task-conditioned accounting requires exactly the joint schema no single public source provides.
 
@@ -233,11 +232,10 @@ Across three studies, aggregate resource signals cannot be reliably attributed t
 
 \bibliographystyle{plainnat}
 \setlength{\bibsep}{1pt}
-\footnotesize
 \setlength{\columnsep}{14pt}
 \setlength{\multicolsep}{3pt}
 \begin{multicols}{2}
-\scriptsize
+\small
 \begin{thebibliography}{10}
 
 \bibitem[Ahmad et~al.(2026)]{ahmad2026open}
@@ -274,98 +272,10 @@ Q. Qian, C. Huang, et al.
 \end{multicols}
 
 %% ============================================================
-\section*{NeurIPS Paper Checklist}
-\scriptsize
-\setlength{\itemsep}{0pt}\setlength{\parsep}{0pt}\setlength{\topsep}{0pt}
 
+\normalsize
 
+\newpage
+\input{checklist}
 
-
-\begin{enumerate}
-
-\item {\bf Claims}
-    \item[] Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
-\item[] Answer: \answerYes{}
-\item[] Justification: Claims are supported by the three public-data studies (Sections 3--5) via permutation/Holm tests, bootstrap and binomial intervals, and pre-specified power analyses (Sections 3--4); limits in Section~7.
-
-\item {\bf Limitations}
-    \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
-\item[] Answer: \answerYes{}
-\item[] Justification: Section~7 (Limits) covers the single-model matched sample, nonrandom trace sample, proxy (non-dollar) measures, observational telemetry, and unverifiable MIMO per-round fields.
-
-\item {\bf Theory assumptions and proofs}
-    \item[] Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?
-\item[] Answer: \answerNA{}
-\item[] Justification: Empirical paper; decompositions are observational fixed-effects models with stated assumptions (Section~3). No theoretical results requiring proof.
-
-    \item {\bf Experimental result reproducibility}
-    \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)?
-\item[] Answer: \answerYes{}
-\item[] Justification: Pipeline and frozen outputs to be released; all inputs public (HAL CSV, Open-SWE-Traces, TraceLab, MIMO). Procedures in Sections~3--4.
-
-
-\item {\bf Open access to data and code}
-    \item[] Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental material?
-\item[] Answer: \answerYes{}
-\item[] Justification: All input datasets are public; analysis code and frozen outputs released upon acceptance (anonymized until then).
-
-
-\item {\bf Experimental setting/details}
-    \item[] Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer) necessary to understand the results?
-\item[] Answer: \answerYes{}
-\item[] Justification: Settings stated: CPS floor $\epsilon{=}0.01$ (sensitivities $0.001$, $0.05$, zero-exclusion); $20{,}000$-draw permutations; minimum overlap $n{\geq}12$ (Sections~3--4).
-
-\item {\bf Experiment statistical significance}
-    \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
-\item[] Answer: \answerYes{}
-\item[] Justification: We report permutation and bootstrap intervals, Holm-corrected permutation tests, and binomial sign tests with a pre-specified $80\%$ power analysis (Sections~3--4).
-
-\item {\bf Experiments compute resources}
-    \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?
-\item[] Answer: \answerYes{}
-\item[] Justification: Lightweight computations over public CSV/trace files on a standard workstation (Apple M-series, 32~GB RAM); minutes of runtime, no GPU or large-scale compute.
-    
-\item {\bf Code of ethics}
-    \item[] Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics \url{https://neurips.cc/public/EthicsGuidelines}?
-\item[] Answer: \answerYes{}
-\item[] Justification: Secondary analysis of public evaluation artifacts; no human subjects, harmful content, or privacy-sensitive data involved.
-
-
-\item {\bf Broader impacts}
-    \item[] Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?
-\item[] Answer: \answerYes{}
-\item[] Justification: Section~7 notes improved evaluation infrastructure is positive (resource awareness, cost/efficiency) with no direct negative impact; gaps are missing-field problems, not enabled harms.
-    
-\item {\bf Safeguards}
-    \item[] Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pre-trained language models, image generators, or scraped datasets)?
-\item[] Answer: \answerNA{}
-\item[] Justification: No high-risk assets are released; we release analysis code and a proposed telemetry schema, not models or scraped datasets with misuse potential.
-
-\item {\bf Licenses for existing assets}
-    \item[] Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected?
-\item[] Answer: \answerYes{}
-\item[] Justification: HAL CSV, Open-SWE-Traces, TraceLab, and MIMO are public research releases and are cited in the References.
-
-\item {\bf New assets}
-    \item[] Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?
-\item[] Answer: \answerYes{}
-\item[] Justification: We release the analysis pipeline, figures, and proposed telemetry schema (Sections~5--6), documented in the accompanying repository.
-
-\item {\bf Crowdsourcing and research with human subjects}
-    \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)?
-\item[] Answer: \answerNA{}
-\item[] Justification: No crowdsourcing or research with human subjects is involved.
-
-\item {\bf Institutional review board (IRB) approvals or equivalent for research with human subjects}
-    \item[] Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained?
-\item[] Answer: \answerNA{}
-\item[] Justification: No human subjects are involved.
-
-\item {\bf Declaration of LLM usage}
-    \item[] Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does \emph{not} impact the core methodology, scientific rigor, or originality of the research, declaration is not required.
-    %this research?
-\item[] Answer: \answerYes{}
-\item[] Justification: LLM assistants aided drafting/editing; all empirical claims and numbers were verified by the authors against code and data, without impacting core methodology or originality.
-
-\end{enumerate}
 \end{document}
