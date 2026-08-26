@@ -30,7 +30,7 @@
 Toward a Telemetry Layer for AgenticOS}
 \author{Anonymous Author(s)}
 \begin{document}
-\small
+\footnotesize
 \maketitle
 
 \begin{abstract}
@@ -74,7 +74,7 @@ Our three studies are therefore complementary rather than linked---each probes a
 \label{sec:related}
 %% ============================================================
 
-Kapoor et al.\ (2026) introduce \hal{} as cost-aware evaluation infrastructure spanning coding, web, science, and customer-service tasks (21,730 rollouts, roughly \$40,000 in evaluation cost). Kapoor et al.\ (2024) motivate joint accuracy--cost reporting and convex-hull frontier analysis, which we adopt as one of three decision-frontier definitions. Ndzomga (2026) asks whether task subsets preserve agent rankings within a single benchmark; we instead ask whether an \emph{observed cost signal} predicts a \emph{different} workload. Benchmark$^2$ studies cross-benchmark rank consistency for static LLM benchmarks; our setting adds interactive scaffolds, dollar cost, success adjustment, and a held-out workload test. SWE-Effi reports that failed attempts consume substantially more resources than successful ones; our matched design tests that claim at fixed task and does not detect the premium once task-difficulty confounding is removed (Section~\ref{sec:matched}). Open-SWE-Traces supplies the exact matching that makes this test possible but lacks token/billing fields, motivating Section~\ref{sec:schema}. Adjacent work sits on either side of this seam: commercial LLM tracing platforms expose per-deployment span usage but are not cross-benchmark evaluation infrastructure, while public evaluation releases strip execution detail; serving-side schedulers and KV-cache managers presuppose exactly the per-request visibility our audited sources lack. We quantify this seam on public data rather than propose another tracer or scheduler.
+Kapoor et al.\ (2026) introduce \hal{} as cost-aware evaluation infrastructure spanning coding, web, science, and customer-service tasks (21,730 rollouts, roughly \$40,000 in evaluation cost). Kapoor et al.\ (2024) motivate joint accuracy--cost reporting and convex-hull frontier analysis, which we adopt as one of three decision-frontier definitions. Ndzomga (2026) asks whether task subsets preserve agent rankings within a single benchmark; we instead ask whether an \emph{observed cost signal} predicts a \emph{different} workload. Benchmark$^2$ studies cross-benchmark rank consistency for static LLM benchmarks; our setting adds interactive scaffolds, dollar cost, success adjustment, and a held-out workload test. SWE-Effi reports that failed attempts consume substantially more resources than successful ones; our matched design tests that claim at fixed task and does not detect the premium once task-difficulty confounding is removed (Section~\ref{sec:matched}). Open-SWE-Traces supplies the exact matching that makes this test possible but lacks token/billing fields, motivating Section~\ref{sec:schema}. Commercial tracers expose per-deployment spans but are not cross-benchmark evaluation, and public releases strip execution detail, so the per-request visibility our audited sources lack is exactly what we quantify.
 
 %% ============================================================
 \section{Study 1: Does a Cost Signal Travel Across Workloads?}
@@ -82,21 +82,21 @@ Kapoor et al.\ (2026) introduce \hal{} as cost-aware evaluation infrastructure s
 %% ============================================================
 
 \subsection{Data and cohort}
-We use the public \texttt{all\_leaderboards\_costs\_HAL.csv} snapshot distributed with Ndzomga (2026): 242 displayed evaluations across nine benchmarks, 11 scaffolds, and 29 displayed model labels. The CSV supplies accuracy and aggregate dollar cost but no token components, provider aliases, tool-call counts, retries, or per-task trajectories---the exact gap this paper is about.
+We use the public HAL CSV snapshot (Ndzomga, 2026): 242 displayed evaluations across nine benchmarks, 11 scaffolds, 29 labels, supplying accuracy and aggregate dollar cost but no token components, retries, or per-task trajectories---the gap this paper is about.
 
-The only scaffold repeated broadly enough is the displayed \hal{} Generalist Agent. Fixing it and matching exact label strings yields six workloads with adequate overlap---CORE-Bench Hard, GAIA, SciCode, ScienceAgentBench, SWE-bench Verified Mini, TAU-bench Airline---for a cohort of 86 rows and 25 labels (USACO has one Generalist observation and is excluded).
+The only broadly repeated scaffold is the displayed \hal{} Generalist Agent; fixing it and matching exact label strings yields six adequately overlapping workloads (CORE-Bench Hard, GAIA, SciCode, ScienceAgentBench, SWE-bench Verified Mini, TAU-bench Airline), a cohort of 86 rows and 25 labels.
 
 \subsection{Raw cost transfers; the mechanism behind it does not}
 Across six pairs with ${\geq}12$ shared labels, raw dollar-cost Spearman $\rho$ ranges $0.74$--$0.93$ (mean $0.84$), surviving Holm-corrected permutation testing (Figure~\ref{fig:rank}). A pooled label-plus-benchmark log-cost fixed-effects model explains $R^2{=}82.0\%$ (adjusted $72.7\%$); once label and benchmark propensity are removed, \textbf{no high-overlap residual-cost association survives} a 20,000-draw permutation test.
 
-Leave-one-benchmark-out (LOBO) prediction succeeds for CORE ($\rho{=}0.78$, $N{=}14$, $p{=}0.0016$), GAIA ($0.87$, $N{=}16$), SWE-mini ($0.90$, $N{=}16$), TAU ($0.83$, $N{=}14$), all robust to every leave-one-label-out omission (e.g., CORE $[0.73,0.91]$, SWE-mini $[0.88,0.92]$). It fails for SciCode (unstable, $[-0.50,0.14]$; $2.1\%$ mean accuracy, one-third zero-accuracy labels) and ScienceAgentBench (directionally negative, $[-0.77,-0.43]$; narrowest log-cost dispersion, $N{=}7$).
+Leave-one-benchmark-out (LOBO) prediction succeeds for CORE ($\rho{=}0.78$, $N{=}14$, $p{=}0.0016$), GAIA ($0.87$, $N{=}16$), SWE-mini ($0.90$, $N{=}16$), TAU ($0.83$, $N{=}14$). It fails for SciCode (unstable, $[-0.50,0.14]$) and ScienceAgentBench (directionally negative, $[-0.77,-0.43]$).
 
 \textbf{Interpretation:} the portable component behaves as a workload-persistent displayed-label propensity---plausibly reflecting provider pricing, reasoning-mode defaults, or routing policy---that a router could in principle learn and reuse. but public data cannot identify \emph{which}, since the distinguishing fields are not exposed.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.48\linewidth]{figures/rank_transfer_compact.pdf}
-\caption{\textbf{Raw cost transfers; success-adjusted cost does not.} Pairwise Spearman rank correlations across benchmark pairs sharing ${\geq}12$ displayed labels. Raw dollar cost is strongly portable (mean $0.84$); cost per expected success is not (mean $0.59$), and only three CPS pairs survive Holm-corrected permutation testing.}
+\caption{\textbf{Raw cost transfers; success-adjusted cost does not.} Pairwise Spearman $\rho$ for benchmark pairs sharing ${\geq}12$ labels. Raw dollar cost is portable (mean $0.84$); cost per expected success is not (mean $0.59$), only three CPS pairs survive correction.}
 \label{fig:rank}
 \end{figure}
 
@@ -119,12 +119,12 @@ OpenHands has lower matched medians: 123 vs.\ 149 trajectory turns (ratio $0.85$
 \centering
 \includegraphics[width=0.49\linewidth]{figures/matched_trace_burden.pdf}\hfill
 \includegraphics[width=0.49\linewidth]{figures/failure_burden_discordant.pdf}
-\caption{\textbf{(a)} Scaffold burden on 977 exact task--model pairs: OpenHands uses $\sim$$15\%$ fewer median turns/tool calls than SWE-agent at fixed task and model. \textbf{(b)} The failure premium is not detected under exact task matching ($80\%$ power against premiums $\geq$$15$pp). Left: naive cross-task ratios reproduce folklore ($19$--$36\%$ heavier failures). Right: among 107 discordant pairs, the failed side is heavier only $47$--$52/107$ on every metric.}
+\caption{\textbf{(a)} Scaffold burden on 977 matched pairs: OpenHands uses $\sim$$15\%$ fewer median turns/tool calls than SWE-agent at fixed task and model. \textbf{(b)} The failure premium is not detected under exact task matching ($80\%$ power against ${\geq}15$pp). Left: naive cross-task ratios reproduce folklore ($19$--$36\%$ heavier failures). Right: among 107 discordant pairs, failed side heavier only $47$--$52/107$.}
 \label{fig:burden}
 \end{figure}
 
 \subsection{The ``expensive failure'' premium is not detected under exact task matching}
-Comparing failed vs.\ resolved trajectories \emph{across} tasks reproduces SWE-Effi's pattern ($19$--$36\%$ heavier failures). But among the \textbf{107 discordant pairs}---identical task, identical model, one scaffold resolved and the other failed---the failed side is heavier only 47--52 times out of 107 on every metric (two-sided binomial $p{\geq}0.25$; observed fraction CIs $[0.37,0.57]$ raw, $[0.43,0.63]$ normalized). A pre-specified power calculation gives $80\%$ power against a premium fraction ${\geq}0.65$ (failed heavier on 70+ of 107); the observed $0.44$--$0.49$ does not resolve smaller effects ($<15$pp). One model, nonrandom sample: this tests the heuristic here, not its general absence.
+Comparing failed vs.\ resolved trajectories \emph{across} tasks reproduces SWE-Effi's pattern ($19$--$36\%$ heavier failures). But among the \textbf{107 discordant pairs}---identical task and model, one scaffold resolved and the other failed---the failed side is heavier only 47--52 of 107 on every metric (binomial $p{\geq}0.25$). An $80\%$-power pre-specified test against premiums ${\geq}15$pp finds the observed $0.44$--$0.49$ uninformative for smaller effects; one model and a nonrandom sample bound the claim.
 
 \textbf{Interpretation:} hard tasks make agents both burn more \emph{and} fail more. An unconditioned failure multiplier measures \emph{which tasks were attempted}, not a property of failing runs. Task-conditioned accounting requires exactly the joint schema no single public source provides.
 
@@ -133,11 +133,11 @@ Comparing failed vs.\ resolved trajectories \emph{across} tasks reproduces SWE-E
 \label{sec:telemetry}
 %% ============================================================
 
-Study~1 shows that aggregate cost cannot explain \emph{why} an agent is expensive; Study~2 shows that execution structure varies across agent systems at fixed task and model. This section shows that the execution variables hidden beneath aggregate cost are themselves highly heterogeneous, heavy-tailed, and state-dependent. Setting aside outcome and billing entirely: what does raw execution telemetry look like? We audit two independent coding-agent corpora (Table~\ref{tab:anatomy}). \textbf{TraceLab}: $8{,}058$ real-world sessions, $665{,}453$ LLM rounds, $743{,}819$ tool calls. \textbf{MIMO Claude Code}: $1{,}017$ sessions, $4{,}690$ rounds, single model. Neither links usage to outcome or billing; all summaries are compositional.
+Studies 1--2 show aggregate cost hides \emph{why} an agent is expensive and that execution structure varies across systems at fixed task and model. This section audits raw execution telemetry across two independent coding-agent corpora (Table~\ref{tab:anatomy}). \textbf{TraceLab}: $8{,}058$ sessions, $665{,}453$ rounds, $743{,}819$ tool calls. \textbf{MIMO Claude Code}: $1{,}017$ sessions, $4{,}690$ rounds. Neither links usage to outcome or billing.
 
 \begin{table}[t]
 \centering
-\caption{\textbf{Telemetry anatomy across two independent corpora.} Cache metrics are computed within each corpus; a share and a total-volume ratio are different quantities and not interconvertible. Conditional-error ratios are computed on unrounded per-call rates.}
+\caption{\textbf{Telemetry anatomy across two independent corpora.} Cache metrics are within-corpus; a share and a total-volume ratio are not interconvertible.}
 \label{tab:anatomy}
 \footnotesize\setlength{\tabcolsep}{3pt}
 \begin{tabular}{lrr}
@@ -158,18 +158,18 @@ Tool-result size, success vs.\ error (median chars) & 602 / 208 & --- \\
 \end{tabular}
 \end{table}
 
-\textbf{Context is the dominant resource, not generation.} The median TraceLab round carries 132{,}092 input tokens against 249 output tokens ($93.7\%$ mean cache-read share); median final-round context is $3.6\times$ initial (P90 $9.9\times$). A leaderboard dollar total cannot distinguish price-driven from cache-policy- or accumulation-driven spend. Tool verbosity drives this: median next-input growth is 443 / 1{,}412 / 5{,}420 tokens below 1k / 1k--10k / above 10k tool-result characters.
+\textbf{Context is the dominant resource, not generation.} The median TraceLab round carries 132{,}092 input tokens against 249 output tokens ($93.7\%$ mean cache-read share); median final-round context is $3.6\times$ initial (P90 $9.9\times$). A dollar total cannot separate price- from cache-policy- or accumulation-driven spend. Tool verbosity drives it: median next-input growth is 443 / 1{,}412 / 5{,}420 tokens below / within / above 10k tool-result characters.
 
 \textbf{Resource burden is heavy-tailed.} The top $1\%$ of sessions hold $48.3\%$ of summed input volume; top $10\%$ hold $88.2\%$. Median session input rises from 0.34M tokens at zero observed tool errors to 14.65M at six or more; mean-based budgeting would miss this tail-driven concentration (Figure~\ref{fig:tail}).
 
-\textbf{Error cascades replicate across independent sources.} After a successful tool call, the next call errs $4.9\%$; after an error, $21.0\%$ ($4.29\times$). MIMO---different model, different site---replicates at $4.33\times$ ($4.3\%$ vs.\ $1.0\%$). Same-tool retry is common ($88.3\%$ of errored calls get one; $77.9\%$ succeed), but the tail is extreme: consecutive-error runs have median length 1, P90 3, max 368. Failures are also slower yet less informative: median latency 313 ms vs.\ 140 ms (P95 85.6 s vs.\ 15.8 s) while returning 208 vs.\ 602 characters---more wall time, less signal.
+\textbf{Error cascades replicate across independent sources.} After a successful call the next errs $4.9\%$, after an error $21.0\%$ ($4.29\times$); MIMO replicates at $4.33\times$ ($4.3\%$ vs.\ $1.0\%$). Same-tool retry is common ($88.3\%$ get one, $77.9\%$ succeed) but the tail is extreme (consecutive-error runs: median 1, P90 3, max 368). Failures are also slower yet less informative: 313 ms vs.\ 140 ms (P95 85.6 s vs.\ 15.8 s), returning 208 vs.\ 602 characters.
 
 \textbf{Data-quality boundary.} MIMO repeats one constant per-round usage tuple, so its within-session token dynamics are not validated; we use it only for session counts, totals, concentration, and content-derived error sequences.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.5\linewidth]{figures/tracelab_tail_error_burden.pdf}
-\caption{\textbf{Heavy-tailed burden.} Top-1\%/top-10\% concentration of summed input tokens (left axis) and median session input by observed-error bin (right): 0.34M at zero errors rising to 14.65M at $6+$.}
+\caption{\textbf{Heavy-tailed burden.} Top-1\%/top-10\% summed-input concentration and median session input by observed-error bin (0.34M at zero to 14.65M at $6+$).}
 \label{fig:tail}
 \end{figure}
 
@@ -178,7 +178,7 @@ Tool-result size, success vs.\ error (median chars) & 602 / 208 & --- \\
 \label{sec:schema}
 %% ============================================================
 
-Table~\ref{tab:gap} shows the coverage gap; the missing rows are precisely those Sections~\ref{sec:cost}--\ref{sec:telemetry} show to be load-bearing. Each field is tied to an analysis above or to the OS control function it unblocks; \emph{evidence-derived} means we claim usefulness and necessity for those functions, not formal minimality. Keyed to the control function each feeds:
+Table~\ref{tab:gap} shows the coverage gap; the missing rows are exactly those Sections~\ref{sec:cost}--\ref{sec:telemetry} show to be load-bearing. Each field is tied to an analysis above or to the OS control function it unblocks (\emph{evidence-derived}: usefulness and necessity for those functions, not formal minimality). Keyed to that function:
 
 \begin{enumerate}[nosep,leftmargin=1.5em]
 \item \emph{(Attribution / exact matching)} \textbf{Task and model identity} (exact IDs, not display strings)---enables exact-matched designs; without it the Section~\ref{sec:matched} test is infeasible on public data.
@@ -195,7 +195,7 @@ Table~\ref{tab:gap} shows the coverage gap; the missing rows are precisely those
 
 \begin{table}[t]
 \centering
-\caption{\textbf{The observability gap.} Field coverage per public source we examined: {\fYes} exposed, {\fPart} partial (display-label-only, degraded fidelity, or inferable), {\fNo} absent. No examined source covers the joint schema; the union still leaves latency unlinked and round-level token fidelity unverifiable outside one corpus.}
+\caption{\textbf{The observability gap.} Coverage per public source examined: {\fYes} exposed, {\fPart} partial (display-label-only, degraded fidelity, or inferable), {\fNo} absent. No source covers the joint schema; the union leaves latency unlinked and round-level token fidelity unverifiable outside one corpus.}
 \label{tab:gap}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -223,13 +223,13 @@ No public source we examined exposes this joint schema. We do not propose a stor
 \label{sec:limits}
 %% ============================================================
 
-This is a secondary-data analysis with clear construct boundaries. Display labels do not fully identify prompts, tools, budgets, or harness versions; the \hal{} cohort is sparse, unbalanced, mostly single-run. Propensity adjustment is observational, not list-price control; CPS is an aggregate ratio, not the mean cost of successful runs. Study~2 uses one model and a nonrandom four-shard sample whose proxies are not tokens or dollars, powered only against strong premiums (${\geq}15$pp). Study~3 is observational and unlinked to outcomes or billing; MIMO's per-round fields are unverifiable and used only where supported, and its design implications (tail-aware budgeting, cascade-triggered halting) are motivations, not evaluated policies. None of this invalidates the schema argument---each limit is itself an instance of the missing-field problem.
+This is a secondary-data analysis with clear boundaries. Display labels do not fully identify prompts, tools, budgets, or harness versions; the \hal{} cohort is sparse, unbalanced, mostly single-run. Propensity adjustment is observational, not list-price control; CPS is an aggregate ratio, not mean cost of successful runs. Study~2 uses one model and a nonrandom sample whose proxies are not tokens or dollars, powered only against strong premiums (${\geq}15$pp). Study~3 is observational and unlinked to outcomes or billing; MIMO's per-round fields are unverifiable and used only where supported, and its design implications are motivations, not evaluated policies. Each limit is itself an instance of the missing-field problem.
 
 %% ============================================================
 \section{Conclusion}
 %% ============================================================
 
-Across three complementary studies, we find that commonly used aggregate resource signals cannot be reliably attributed to workload, execution, or outcome without telemetry fields that the public evaluation sources we examined do not jointly expose. Raw-cost rankings transfer across workloads but are strongly associated with a workload-persistent displayed-label cost propensity; success-adjusted cost reorders the ranking (surviving correction for three of six pairs); the widely assumed failure-cost premium is not detected under exact task matching. Beneath all three results sits one missing artifact: no examined public source jointly links task, model, scaffold and configuration, outcome, token/cache usage, retries, latency, and billing. Because the layer that controls execution and allocates resources is the natural owner of exactly this telemetry, we argue the schema belongs at a shared operating-system layer for agentic AI---the role resource accounting plays in conventional OSes---rather than being reconstructed independently, incompletely, and incompatibly inside each leaderboard or trace release.
+Across three studies, aggregate resource signals cannot be reliably attributed to workload, execution, or outcome without telemetry fields the public sources we examined do not jointly expose. Raw-cost rankings transfer across workloads but are strongly associated with a workload-persistent displayed-label cost propensity; success-adjusted cost reorders the ranking (three of six pairs survive correction); the assumed failure-cost premium is not detected under exact task matching. No examined source jointly links task, model, scaffold and configuration, outcome, token/cache usage, retries, latency, and billing. The layer that controls execution and allocates resources is the natural owner of this telemetry, so we argue the schema belongs at a shared operating-system layer for agentic AI rather than being reconstructed piecemeal inside each leaderboard or trace release.
 
 \bibliographystyle{plainnat}
 \setlength{\bibsep}{1pt}
@@ -275,6 +275,8 @@ Q. Qian, C. Huang, et al.
 
 %% ============================================================
 \section*{NeurIPS Paper Checklist}
+\scriptsize
+\setlength{\itemsep}{0pt}\setlength{\parsep}{0pt}\setlength{\topsep}{0pt}
 
 
 
@@ -284,55 +286,55 @@ Q. Qian, C. Huang, et al.
 \item {\bf Claims}
     \item[] Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
 \item[] Answer: \answerYes{}
-\item[] Justification: All claims in the abstract and introduction are directly supported by the three public-data studies (Sections 3--5) using pre-specified permutation/Holm tests, bootstrap and binomial confidence intervals, and explicit power analyses (Sections 3--4); limitations are stated in Section~7.
+\item[] Justification: Claims are supported by the three public-data studies (Sections 3--5) via permutation/Holm tests, bootstrap and binomial intervals, and pre-specified power analyses (Sections 3--4); limits in Section~7.
 
 \item {\bf Limitations}
     \item[] Question: Does the paper discuss the limitations of the work performed by the authors?
 \item[] Answer: \answerYes{}
-\item[] Justification: Section~7 (Limits) discusses the single-model matched sample, nonrandom trace sample, proxy (not dollar) measures, observational telemetry, and the unverifiable MIMO per-round fields.
+\item[] Justification: Section~7 (Limits) covers the single-model matched sample, nonrandom trace sample, proxy (non-dollar) measures, observational telemetry, and unverifiable MIMO per-round fields.
 
 \item {\bf Theory assumptions and proofs}
     \item[] Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?
 \item[] Answer: \answerNA{}
-\item[] Justification: This is an empirical paper; our decompositions are observational fixed-effects models whose assumptions are stated (Section~3). There are no theoretical results requiring proof.
+\item[] Justification: Empirical paper; decompositions are observational fixed-effects models with stated assumptions (Section~3). No theoretical results requiring proof.
 
     \item {\bf Experimental result reproducibility}
     \item[] Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)?
 \item[] Answer: \answerYes{}
-\item[] Justification: The analysis pipeline and frozen outputs will be released upon publication; all inputs are public (HAL CSV, Open-SWE-Traces, TraceLab, MIMO). Cohort construction, resampling, and permutation procedures are described in Sections~3--4.
+\item[] Justification: Pipeline and frozen outputs to be released; all inputs public (HAL CSV, Open-SWE-Traces, TraceLab, MIMO). Procedures in Sections~3--4.
 
 
 \item {\bf Open access to data and code}
     \item[] Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental material?
 \item[] Answer: \answerYes{}
-\item[] Justification: All input datasets are public; analysis code and frozen outputs will be released upon acceptance (anonymized until then).
+\item[] Justification: All input datasets are public; analysis code and frozen outputs released upon acceptance (anonymized until then).
 
 
 \item {\bf Experimental setting/details}
     \item[] Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer) necessary to understand the results?
 \item[] Answer: \answerYes{}
-\item[] Justification: Analytic settings are stated: CPS floor $\epsilon{=}0.01$ with sensitivities at $0.001$, $0.05$, and zero-exclusion; $20{,}000$-draw permutation tests; bootstrap seeds; minimum pairwise overlap $n{\geq}12$ (Sections~3--4).
+\item[] Justification: Settings stated: CPS floor $\epsilon{=}0.01$ (sensitivities $0.001$, $0.05$, zero-exclusion); $20{,}000$-draw permutations; minimum overlap $n{\geq}12$ (Sections~3--4).
 
 \item {\bf Experiment statistical significance}
     \item[] Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?
 \item[] Answer: \answerYes{}
-\item[] Justification: We report permutation confidence intervals, Holm-corrected permutation tests, bootstrap intervals, and binomial sign tests with a pre-specified $80\%$ power calculation (Sections~3--4).
+\item[] Justification: We report permutation and bootstrap intervals, Holm-corrected permutation tests, and binomial sign tests with a pre-specified $80\%$ power analysis (Sections~3--4).
 
 \item {\bf Experiments compute resources}
     \item[] Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?
 \item[] Answer: \answerYes{}
-\item[] Justification: Analyses are lightweight computations over public CSV and trace files run on a standard workstation (Apple M-series, 32~GB RAM); total runtime is on the order of minutes, with no GPU or large-scale compute required.
+\item[] Justification: Lightweight computations over public CSV/trace files on a standard workstation (Apple M-series, 32~GB RAM); minutes of runtime, no GPU or large-scale compute.
     
 \item {\bf Code of ethics}
     \item[] Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics \url{https://neurips.cc/public/EthicsGuidelines}?
 \item[] Answer: \answerYes{}
-\item[] Justification: This is a secondary analysis of public evaluation artifacts; no human subjects, no harmful content generation, and no privacy-sensitive data are involved.
+\item[] Justification: Secondary analysis of public evaluation artifacts; no human subjects, harmful content, or privacy-sensitive data involved.
 
 
 \item {\bf Broader impacts}
     \item[] Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?
 \item[] Answer: \answerYes{}
-\item[] Justification: Section~7 notes that improved evaluation infrastructure is broadly positive (better resource awareness and cost/efficiency) and identifies no direct negative societal impact; each documented gap is a missing-field problem rather than an enabled harm.
+\item[] Justification: Section~7 notes improved evaluation infrastructure is positive (resource awareness, cost/efficiency) with no direct negative impact; gaps are missing-field problems, not enabled harms.
     
 \item {\bf Safeguards}
     \item[] Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pre-trained language models, image generators, or scraped datasets)?
@@ -347,7 +349,7 @@ Q. Qian, C. Huang, et al.
 \item {\bf New assets}
     \item[] Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?
 \item[] Answer: \answerYes{}
-\item[] Justification: We release the analysis pipeline, figures, and the proposed telemetry schema (Sections~5--6); they are documented in the accompanying repository.
+\item[] Justification: We release the analysis pipeline, figures, and proposed telemetry schema (Sections~5--6), documented in the accompanying repository.
 
 \item {\bf Crowdsourcing and research with human subjects}
     \item[] Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)?
@@ -363,7 +365,7 @@ Q. Qian, C. Huang, et al.
     \item[] Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does \emph{not} impact the core methodology, scientific rigor, or originality of the research, declaration is not required.
     %this research?
 \item[] Answer: \answerYes{}
-\item[] Justification: LLM-based assistants aided drafting and editing; all empirical claims and numbers were verified by the authors against the underlying code and data. The LLM use did not impact the core methodology or originality of the research.
+\item[] Justification: LLM assistants aided drafting/editing; all empirical claims and numbers were verified by the authors against code and data, without impacting core methodology or originality.
 
 \end{enumerate}
 \end{document}
