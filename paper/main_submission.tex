@@ -34,7 +34,7 @@ Toward a Telemetry Layer for AgenticOS}
 \maketitle
 
 \begin{abstract}
-Agentic AI systems are evaluated today through three disjoint public infrastructures---leaderboards, trace corpora, and telemetry logs---none of the public sources we examine jointly exposes the fields a resource-aware operating layer would need: task identity, model identity, scaffold and policy-configuration identity, outcome, token/cache usage, retries, latency, and billing. We measure its consequences across three studies on public data. First, using the Holistic Agent Leaderboard (\hal{}), raw dollar-cost rankings transfer across some benchmark pairs (Spearman $\rho{=}0.74$--$0.93$) but are mostly absorbed by a persistent displayed-label cost propensity (pooled model $R^2{=}82.0\%$); success-adjusted cost is markedly less portable (mean $\rho{=}0.59$ vs.\ $0.84$). Second, using 977 exact task--model--matched trajectory pairs from Open-SWE-Traces, scaffold choice changes observable execution burden at fixed task and model (OpenHands/SWE-agent turn ratio $0.85$, $[0.82,0.87]$), and the widely assumed ``expensive failure'' premium is not detected under exact task matching ($80\%$-power threshold: premium fractions $\geq 0.65$; observed $0.47$--$0.53$). Third, auditing two independent telemetry corpora ($8{,}058$ and $1{,}017$ sessions), we characterize the resource anatomy---$93.7\%$ mean cache-read share, $4.29\times$ conditional tool-error cascades replicated across sources, top-$1\%$-of-sessions holding $48.3\%$ of input-token volume---that a scheduler or router would need but that no benchmark currently attaches to an outcome. These studies are complementary rather than linked: Studies~1--2 show that transferred raw-cost rankings and unconditioned failure premiums confound \emph{which workloads were attempted} with \emph{how agents behaved on them}, while Study~3 shows that the execution variables hidden beneath those aggregates are themselves heterogeneous, heavy-tailed, and state-dependent. From this evidence we derive a joint telemetry schema spanning identity, execution, resources, control, and outcome, and argue it belongs at the operating-system layer: controlling execution and allocating resources requires observing what those allocations depend on.
+Agentic AI systems are evaluated today through three disjoint public infrastructures---leaderboards, trace corpora, and telemetry logs---none of the public sources we examine jointly exposes the fields a resource-aware operating layer would need: task identity, model identity, scaffold and policy-configuration identity, outcome, token/cache usage, retries, latency, and billing. We measure its consequences across three studies on public data. First, using the Holistic Agent Leaderboard (\hal{}), raw dollar-cost rankings transfer across some benchmark pairs (Spearman $\rho{=}0.74$--$0.93$) but are mostly absorbed by a workload-persistent displayed-label cost propensity (pooled model $R^2{=}82.0\%$); success-adjusted cost is markedly less portable (mean $\rho{=}0.59$ vs.\ $0.84$). Second, using 977 exact task--model--matched trajectory pairs from Open-SWE-Traces, scaffold choice changes observable execution burden at fixed task and model (OpenHands/SWE-agent turn ratio $0.85$, $[0.82,0.87]$), and the widely assumed ``expensive failure'' premium is not detected under exact task matching ($80\%$-power threshold: premium fractions $\geq 0.65$; observed $0.44$--$0.49$). Third, auditing two independent telemetry corpora ($8{,}058$ and $1{,}017$ sessions), we characterize the resource anatomy---$93.7\%$ mean cache-read share, $4.29\times$ conditional tool-error cascades replicated across sources, top-$1\%$-of-sessions holding $48.3\%$ of input-token volume---that a scheduler or router would need but that no benchmark currently attaches to an outcome. These studies are complementary rather than linked: Studies~1--2 show that transferred raw-cost rankings and unconditioned failure premiums confound \emph{which workloads were attempted} with \emph{how agents behaved on them}, while Study~3 shows that the execution variables hidden beneath those aggregates are themselves heterogeneous, heavy-tailed, and state-dependent. From this evidence we derive a joint telemetry schema spanning identity, execution, resources, control, and outcome, and argue it belongs at the operating-system layer: controlling execution and allocating resources requires observing what those allocations depend on.
 \end{abstract}
 
 %% ============================================================
@@ -44,11 +44,11 @@ Agentic AI systems are evaluated today through three disjoint public infrastruct
 
 Agentic AI systems persist state, invoke tools, retry failed actions, and accumulate context across long horizons. Reasoning about their resource behavior---for scheduling, routing, cost budgeting, or governance---requires the same unified telemetry that operating systems have long provided for conventional workloads: a common schema linking \emph{what ran}, \emph{on what}, \emph{under which policy}, \emph{with what outcome}, and \emph{at what resource cost}. We use \emph{observability debt} to name the accumulated inability of public agent-evaluation infrastructure to jointly attribute resource consumption to task, model, execution policy, outcome, and system-level events. In every public source we examined, this debt prevents reliable attribution of observed resource differences to workload, model, scaffold, configuration, or execution behavior.
 
-What makes this an \emph{operating-system} responsibility rather than better benchmark bookkeeping? An agentic OS occupies a specific functional position. It observes \emph{identity} (which task, model, scaffold, and policy configuration is running), \emph{execution} (which tools act, what context accumulates), \emph{resources} (tokens, cache, time, memory, money), \emph{control} (retry, terminate, route, budget), and \emph{outcome} (did the task succeed). The principle that places resource accounting inside conventional OSes applies verbatim: \textbf{controlling execution and allocating resources requires observing what those decisions depend on}. Without per-round token components, a memory manager cannot budget context growth; without configuration identity, a router cannot learn \emph{why} one label is cheap; without error-status streams, a governor cannot halt a spiraling session. Today, each of these decisions is made implicitly from aggregate dollar figures (Figure~\ref{fig:loop}).
+What makes this an \emph{operating-system} responsibility rather than better benchmark bookkeeping? An agentic OS occupies a specific functional position. It observes \emph{identity} (which task, model, scaffold, and policy configuration is running), \emph{execution} (which tools act, what context accumulates), \emph{resources} (tokens, cache, time, memory, money), \emph{control} (retry, terminate, route, budget), and \emph{outcome} (did the task succeed). The same resource-accounting principle motivates an OS-level treatment: the layer that controls execution and allocates resources needs access to the telemetry required to make those decisions. Without per-round token components, a memory manager cannot budget context growth; without configuration identity, a router cannot learn \emph{why} one label is cheap; without error-status streams, a governor cannot halt a spiraling session. Today, each of these decisions is made implicitly from aggregate dollar figures (Figure~\ref{fig:loop}).
 
-We treat three public data sources as stand-ins for what this observability layer would unify: a cost-and-outcome leaderboard (\hal{}), a task/model/scaffold-matched trajectory corpus (Open-SWE-Traces), and raw session-level usage telemetry (two independent corpora). Each exposes a different partial view. \hal{} links dollar cost to outcome but encrypts execution traces. Open-SWE-Traces exposes exact task/model/scaffold matching and resolved status but no tokens or billing. The telemetry corpora expose token, cache, and tool-call dynamics but no outcome or billing. \textbf{No public source we examined jointly exposes task, model, scaffold and policy configuration, outcome, token/cache usage, retries, latency, and billing}, the joint schema a resource-aware OS layer needs (Table~\ref{tab:gap}).
+We treat three public data sources as stand-ins for what this observability layer would unify: a cost-and-outcome leaderboard (\hal{}), a task/model/scaffold-matched trajectory corpus (Open-SWE-Traces), and raw session-level usage telemetry (two independent corpora). Each exposes a different partial view. \hal{} links dollar cost to outcome but encrypts execution traces. Open-SWE-Traces exposes exact task/model/scaffold matching and resolved status but no tokens or billing. The telemetry corpora expose token, cache, and tool-call dynamics but no outcome or billing. \textbf{No public source we examined jointly exposes task, model, scaffold and policy configuration, outcome, token/cache usage, retries, latency, and billing}, the joint schema a resource-aware OS layer needs (Table~\ref{tab:gap}). Importantly, combining these sources does not create record-level observability: their different execution units, identifiers, and release boundaries prevent resource use, outcome, and billing from being joined into a single per-execution record.
 
-Our three studies are therefore complementary rather than linked---each probes a different dimension of the gap, and none can be joined to another at the record level. (1)~A coverage-aware cost-portability study (\hal{}) shows that aggregate dollar cost conflates displayed-label propensity with benchmark difficulty and decorrelates under success adjustment. (2)~A matched-trajectory study shows that execution structure differs measurably across scaffolds, while a popular failure-cost heuristic turns out to measure workload composition. (3)~A cross-source telemetry audit shows that the execution variables hidden beneath aggregate cost are themselves highly heterogeneous, heavy-tailed, and state-dependent. Together they triangulate one gap; no pair of them jointly identifies a causal mechanism.
+Our three studies are therefore complementary rather than linked---each probes a different dimension of the gap, and none can be joined to another at the record level. (1)~A coverage-aware cost-portability study (\hal{}) shows that aggregate dollar cost conflates displayed-label propensity with benchmark difficulty and decorrelates under success adjustment. (2)~A matched-trajectory study shows that execution structure differs measurably across scaffolds, while a popular failure-cost heuristic turns out to measure workload composition. (3)~A cross-source telemetry audit shows that the execution variables hidden beneath aggregate cost are themselves highly heterogeneous, heavy-tailed, and state-dependent. Together they triangulate one gap; no pair of them jointly identifies a causal mechanism. This paper is an empirical requirements study for an AgenticOS telemetry layer, rather than an implementation of the layer itself.
 
 \begin{figure}[t]
 \centering
@@ -91,7 +91,7 @@ Across six pairs with ${\geq}12$ shared labels, raw dollar-cost Spearman $\rho$ 
 
 Leave-one-benchmark-out (LOBO) prediction succeeds for CORE ($\rho{=}0.78$, $N{=}14$, $p{=}0.0016$), GAIA ($0.87$, $N{=}16$), SWE-mini ($0.90$, $N{=}16$), TAU ($0.83$, $N{=}14$), all robust to every leave-one-label-out omission (e.g., CORE $[0.73,0.91]$, SWE-mini $[0.88,0.92]$). It fails for SciCode (unstable, $[-0.50,0.14]$; $2.1\%$ mean accuracy, one-third zero-accuracy labels) and ScienceAgentBench (directionally negative, $[-0.77,-0.43]$; narrowest log-cost dispersion, $N{=}7$).
 
-\textbf{Interpretation:} the portable component behaves as a persistent displayed-label propensity---plausibly reflecting provider pricing, reasoning-mode defaults, or routing policy---that a router could in principle learn and reuse. But public data cannot identify \emph{which} mechanism it is, because none of the distinguishing fields (token components, routing decisions, cache treatment) are exposed.
+\textbf{Interpretation:} the portable component behaves as a workload-persistent displayed-label propensity---plausibly reflecting provider pricing, reasoning-mode defaults, or routing policy---that a router could in principle learn and reuse. But public data cannot identify \emph{which} mechanism it is, because none of the distinguishing fields (token components, routing decisions, cache treatment) are exposed.
 
 \begin{figure}[t]
 \centering
@@ -123,8 +123,8 @@ OpenHands has lower matched medians: 123 vs.\ 149 trajectory turns (ratio $0.85$
 \label{fig:burden}
 \end{figure}
 
-\subsection{The ``expensive failure'' premium is not detected under exact matching}
-Comparing failed vs.\ resolved trajectories \emph{across} tasks reproduces SWE-Effi's pattern ($19$--$36\%$ heavier failures). But among the \textbf{107 discordant pairs}---identical task, identical model, one scaffold resolved and the other failed---the failed side is heavier only 47--52 times out of 107 on every metric (two-sided binomial $p{\geq}0.25$; observed fraction CIs $[0.37,0.57]$ raw, $[0.43,0.63]$ normalized). Normalizing each trajectory by its scaffold's median burden gives failed/resolved ratios of $0.98$--$1.06$ spanning $1$. A pre-specified power calculation gives $80\%$ power against a premium fraction ${\geq}0.65$ (failed heavier on 70+ of 107); observed $0.47$--$0.53$ rules out strong versions but not modest ones ($<15$pp). One model, nonrandom sample: this tests the heuristic here, not its general absence.
+\subsection{The ``expensive failure'' premium is not detected under exact task matching}
+Comparing failed vs.\ resolved trajectories \emph{across} tasks reproduces SWE-Effi's pattern ($19$--$36\%$ heavier failures). But among the \textbf{107 discordant pairs}---identical task, identical model, one scaffold resolved and the other failed---the failed side is heavier only 47--52 times out of 107 on every metric (two-sided binomial $p{\geq}0.25$; observed fraction CIs $[0.37,0.57]$ raw, $[0.43,0.63]$ normalized). Normalizing each trajectory by its scaffold's median burden gives failed/resolved ratios of $0.98$--$1.06$ spanning $1$. A pre-specified power calculation gives $80\%$ power against a premium fraction ${\geq}0.65$ (failed heavier on 70+ of 107); observed $0.44$--$0.49$ rules out strong versions but not modest ones ($<15$pp). One model, nonrandom sample: this tests the heuristic here, not its general absence.
 
 \textbf{Interpretation:} hard tasks make agents both burn more \emph{and} fail more. An unconditioned failure multiplier measures \emph{which tasks were attempted}, not a property of failing runs. Task-conditioned accounting requires exactly the joint schema no single public source provides.
 
@@ -229,21 +229,7 @@ This is a secondary-data analysis with clear construct boundaries. Display label
 \section{Conclusion}
 %% ============================================================
 
-Across three complementary studies, we find that commonly used aggregate resource signals cannot be reliably attributed to workload, execution, or outcome without telemetry fields that the public evaluation sources we examined do not jointly expose. Raw-cost rankings transfer across workloads but largely reflect persistent displayed-label cost propensity; success-adjusted cost reorders the ranking and survives correction for half the tested pairs; the widely assumed failure-cost premium is not detected once task difficulty is held fixed by exact matching. Beneath all three results sits one missing artifact: no examined public source jointly links task, model, scaffold and configuration, outcome, token/cache usage, retries, latency, and billing. Because the layer that controls execution and allocates resources is the natural owner of exactly this telemetry, we argue the schema belongs at a shared operating-system layer for agentic AI---the role resource accounting plays in conventional OSes---rather than being reconstructed independently, incompletely, and incompatibly inside each leaderboard or trace release.
-
-%% ============================================================
-\section*{Checklist}
-%% ============================================================
-
-{\scriptsize
-\begin{itemize}[nosep,leftmargin=1.5em]
-\item[\textbf{1.}]\textbf{Claims:} Supported by analyses of public data with pre-specified tests, permutation/Holm correction, and explicit power statements (Section~\ref{sec:matched}).
-\item[\textbf{2.}]\textbf{Limitations:} Section~\ref{sec:limits} covers construct boundaries, sampling, proxy validity, and power.
-\item[\textbf{3.}]\textbf{Data:} All sources public: HAL CSV (Ndzomga 2026), Open-SWE-Traces (Ahmad et al.\ 2026), TraceLab, MIMO.
-\item[\textbf{4.}]\textbf{Code:} Pipeline and frozen outputs released upon publication; reproducible from public data alone.
-\item[\textbf{5.}]\textbf{Ethics/anonymity:} Double-blind; secondary analysis of public evaluation artifacts; no human subjects.
-\end{itemize}
-}
+Across three complementary studies, we find that commonly used aggregate resource signals cannot be reliably attributed to workload, execution, or outcome without telemetry fields that the public evaluation sources we examined do not jointly expose. Raw-cost rankings transfer across workloads but largely reflect a workload-persistent displayed-label cost propensity; success-adjusted cost reorders the ranking and survives correction for half the tested pairs; the widely assumed failure-cost premium is not detected under exact task matching. Beneath all three results sits one missing artifact: no examined public source jointly links task, model, scaffold and configuration, outcome, token/cache usage, retries, latency, and billing. Because the layer that controls execution and allocates resources is the natural owner of exactly this telemetry, we argue the schema belongs at a shared operating-system layer for agentic AI---the role resource accounting plays in conventional OSes---rather than being reconstructed independently, incompletely, and incompatibly inside each leaderboard or trace release.
 
 \bibliographystyle{plainnat}
 \setlength{\bibsep}{1pt}
@@ -286,5 +272,110 @@ Q. Qian, C. Huang, et al.
 
 \end{thebibliography}
 \end{multicols}
+
+%% ============================================================
+\section*{NeurIPS Paper Checklist}
+%% ============================================================
+
+\begin{enumerate}[leftmargin=1.6em]
+\item \textbf{Claims}
+  \begin{enumerate}
+  \item[(a)] Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
+    \answerYes[All three claims are empirical and scoped to public data; confounds, proxy limits, and power are stated (Sections 3--5, Limitations).]
+  \item[(b)] Based on the claims, could a reader reasonably judge the merits of your work?
+    \answerYes[We report effect sizes, confidence intervals, and pre-specified power analyses (Sections 3--4).]
+  \item[(c)] Did you use or create scientific artifacts?
+    \answerYes[We analyze public artifacts: HAL CSV, Open-SWE-Traces, TraceLab, and MIMO telemetry (Data/Related Work).]
+  \item[(d)] Did you discuss the limitations of your work?
+    \answerYes[Section~7 (Limits) and Section~5 data-quality boundary.]
+  \item[(e)] Have you read the NeurIPS ethics guidelines and ensured your paper conforms?
+    \answerYes[]
+  \end{enumerate}
+\item \textbf{Limitations}
+  \begin{enumerate}
+  \item[(a)] Do the main claims reflect the paper's contributions and scope?
+    \answerYes[See (1a).]
+  \item[(b)] Did you discuss any limitations?
+    \answerYes[Single-model matched sample, nonrandom trace sample, proxies not dollars, observational telemetry (Section~7).]
+  \item[(c)] Did you report confidence intervals or error bars?
+    \answerYes[Bootstrap/permutation CIs and binomial CIs throughout (Sections 3--4).]
+  \item[(d)] Did you use LLM-based assistants?
+    \answerYes[See Declaration of LLM usage (item 13).]
+  \end{enumerate}
+\item \textbf{Theory Assumptions and Proofs}
+  \begin{enumerate}
+  \item[(a)] Did you state the assumptions underlying your theory?
+    \answerNA[No formal theory; our decompositions are observational fixed-effects models whose assumptions are stated (Section~3).]
+  \item[(b)] Did you discuss the implications of your assumptions?
+    \answerYes[Discussed in Interpretation and Limits.]
+  \item[(c)] Did you provide proofs of theoretical claims?
+    \answerNA[No theoretical claims.]
+  \end{enumerate}
+\item \textbf{Experimental Result Reproducibility}
+  \begin{enumerate}
+  \item[(a)] Did you include code, data, and instructions for reproduction?
+    \answerYes[Analysis pipeline and frozen outputs will be released; all inputs are public (Data).]
+  \item[(b)] Did you specify all training details?
+    \answerNA[No model training; we use released public checkpoints/models.]
+  \item[(c)] Did you report error bars / uncertainty?
+    \answerYes[Permutation, Holm, and bootstrap intervals; power analysis (Sections 3--4).]
+  \end{enumerate}
+\item \textbf{Open Access to Data and Code}
+  \begin{enumerate}
+  \item[(a)] Do you provide open access to data and code?
+    \answerYes[Upon publication; inputs are already public.]
+  \item[(b)] Will your data and code be maintained?
+    \answerYes[Repository will be maintained by the authors.]
+  \end{enumerate}
+\item \textbf{Experimental Setting / Details}
+  \begin{enumerate}
+  \item[(a)] Did you specify all hyperparameters?
+    \answerNA[No training; CPS floor $\epsilon$ and permutation counts are stated (Section~3).]
+  \item[(b)] Did you describe computing infrastructure?
+    \answerYes[Briefly: public CSV and trace corpora processed locally (Data).]
+  \end{enumerate}
+\item \textbf{Experiment Statistical Significance}
+  \begin{enumerate}
+  \item[(a)] Did you report the uncertainty of your results?
+    \answerYes[See (4c).]
+  \item[(b)] Did you use statistical tests?
+    \answerYes[Spearman correlations with Holm-corrected permutation tests; binomial sign tests with pre-specified power (Sections 3--4).]
+  \end{enumerate}
+\item \textbf{Societal Impact}
+  \begin{enumerate}
+  \item[(a)] Did you discuss societal impact?
+    \answerYes[Briefly in Limits: improved evaluation infrastructure, no direct harm identified.]
+  \item[(b)] Did you discuss potential negative outcomes?
+    \answerYes[Limitations note each gap is itself a missing-field problem; no harmful application enabled.]
+  \end{enumerate}
+\item \textbf{Safeguards}
+  \begin{enumerate}
+  \item[(a)] Did you describe safeguards for dangerous artifacts?
+    \answerNA[No dangerous artifacts; data are public evaluation traces.]
+  \end{enumerate}
+\item \textbf{Licenses for Artifacts}
+  \begin{enumerate}
+  \item[(a)] Did you verify licenses for data/code?
+    \answerYes[All inputs are released under public research licenses (HAL CSV, Open-SWE-Traces, TraceLab, MIMO).]
+  \end{enumerate}
+\item \textbf{New Assets}
+  \begin{enumerate}
+  \item[(a)] Did you introduce new assets?
+    \answerYes[We release the analysis pipeline, figures, and the proposed telemetry schema (Sections 5--6).]
+  \end{enumerate}
+\item \textbf{Crowdsourcing and Research with Human Subjects}
+  \begin{enumerate}
+  \item[(a)] Did you use crowdsourcing?
+    \answerNA[No crowdsourcing.]
+  \item[(b)] Did you obtain IRB approval?
+    \answerNA[No human subjects.]
+  \end{enumerate}
+\item \textbf{Declaration of LLM usage}
+  \begin{enumerate}
+  \item[(a)] Did you use LLMs to assist with this work?
+    \answerYes[LLM-based assistants supported drafting and editing; all empirical claims and numbers were verified by the authors against the underlying code and data.]
+  \end{enumerate}
+\end{enumerate}
+
 
 \end{document}
