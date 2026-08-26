@@ -33,7 +33,7 @@ Toward a Telemetry Layer for AgenticOS}
 \maketitle
 
 \begin{abstract}
-Agentic AI systems are evaluated today through three disjoint public infrastructures---leaderboards, trace corpora, and telemetry logs---none of the public sources we examine jointly exposes the fields a resource-aware operating layer would need: task identity, model identity, scaffold and policy-configuration identity, outcome, token/cache usage, retries, latency, and billing. We measure its consequences across three studies on public data. First, using the Holistic Agent Leaderboard (\hal{}), raw dollar-cost rankings transfer across some benchmark pairs (Spearman $\rho{=}0.74$--$0.93$) but are mostly absorbed by a workload-persistent displayed-label cost propensity (pooled model $R^2{=}82.0\%$); success-adjusted cost is markedly less portable (mean $\rho{=}0.59$ vs.\ $0.84$). Second, using 977 exact task--model--matched trajectory pairs from Open-SWE-Traces, scaffold choice changes observable execution burden at fixed task and model (OpenHands/SWE-agent turn ratio $0.85$, $[0.82,0.87]$), and the widely assumed ``expensive failure'' premium is not detected under exact task matching ($80\%$-power threshold: premium fractions $\geq 0.65$; observed $0.44$--$0.49$). Third, auditing two independent telemetry corpora ($8{,}058$ and $1{,}017$ sessions), we characterize the resource anatomy---$93.7\%$ mean cache-read share, $4.29\times$ conditional tool-error cascades replicated across sources, top-$1\%$-of-sessions holding $48.3\%$ of input-token volume---that a scheduler or router would need but that no benchmark currently attaches to an outcome. These studies are complementary rather than linked: Studies~1--2 show that transferred raw-cost rankings and unconditioned failure premiums confound \emph{which workloads were attempted} with \emph{how agents behaved on them}, while Study~3 shows that the execution variables hidden beneath those aggregates are themselves heterogeneous, heavy-tailed, and state-dependent. From this evidence we derive a joint telemetry schema spanning identity, execution, resources, control, and outcome, and argue it belongs at the operating-system layer: controlling execution and allocating resources requires observing what those allocations depend on.
+Agentic AI systems are evaluated today through three disjoint public infrastructures---leaderboards, trace corpora, and telemetry logs---none of the public sources we examine jointly exposes the fields a resource-aware operating layer would need: task identity, model identity, scaffold and policy-configuration identity, outcome, token/cache usage, retries, latency, and billing. We measure its consequences across three studies on public data. First, using the Holistic Agent Leaderboard (\hal{}), raw dollar-cost rankings transfer across some benchmark pairs (Spearman $\rho{=}0.74$--$0.93$) but are mostly absorbed by a workload-persistent displayed-label cost propensity (pooled model $R^2{=}82.0\%$); success-adjusted cost is markedly less portable (mean $\rho{=}0.59$ vs.\ $0.84$). Second, using 977 exact task--model--matched trajectory pairs from Open-SWE-Traces, scaffold choice changes observable execution burden at fixed task and model (OpenHands/SWE-agent turn ratio $0.85$, $[0.82,0.87]$), and the widely assumed ``expensive failure'' premium is not detected under exact task matching ($80\%$-power threshold: premium fractions $\geq 0.65$; observed $0.44$--$0.49$). Third, auditing two independent telemetry corpora ($8{,}058$ and $1{,}017$ sessions), we characterize the resource anatomy---$93.7\%$ mean cache-read share, $4.29\times$ conditional tool-error cascades replicated across sources, top-$1\%$-of-sessions holding $48.3\%$ of input-token volume---that a scheduler or router would need but that the telemetry corpora we examine do not attach these execution measurements to an outcome. These studies are complementary rather than linked: Studies~1--2 show that transferred raw-cost rankings and unconditioned failure premiums confound \emph{which workloads were attempted} with \emph{how agents behaved on them}, while Study~3 shows that the execution variables hidden beneath those aggregates are themselves heterogeneous, heavy-tailed, and state-dependent. From this evidence we derive a joint telemetry schema spanning identity, execution, resources, control, and outcome, and argue it belongs at the operating-system layer: controlling execution and allocating resources requires observing what those allocations depend on.
 \end{abstract}
 
 %% ============================================================
@@ -90,7 +90,7 @@ Across six pairs with ${\geq}12$ shared labels, raw dollar-cost Spearman $\rho$ 
 
 Leave-one-benchmark-out (LOBO) prediction succeeds for CORE ($\rho{=}0.78$, $N{=}14$, $p{=}0.0016$), GAIA ($0.87$, $N{=}16$), SWE-mini ($0.90$, $N{=}16$), TAU ($0.83$, $N{=}14$). It fails for SciCode (unstable, $[-0.50,0.14]$) and ScienceAgentBench (directionally negative, $[-0.77,-0.43]$).
 
-\textbf{Interpretation:} the portable component behaves as a workload-persistent displayed-label propensity---plausibly reflecting provider pricing, reasoning-mode defaults, or routing policy---that a router could in principle learn and reuse. but public data cannot identify \emph{which}, since the distinguishing fields are not exposed.
+\textbf{Interpretation:} the portable component behaves as a workload-persistent displayed-label propensity---plausibly reflecting provider pricing, reasoning-mode defaults, or routing policy---that a router could in principle learn and reuse. But public data cannot identify \emph{which}, since the distinguishing fields are not exposed.
 
 \begin{figure}[t]
 \centering
@@ -132,7 +132,7 @@ Comparing failed vs.\ resolved trajectories \emph{across} tasks reproduces SWE-E
 \label{sec:telemetry}
 %% ============================================================
 
-Studies 1--2 show aggregate cost hides \emph{why} an agent is expensive and that execution structure varies across systems at fixed task and model. This section audits raw execution telemetry across two independent coding-agent corpora (Table~\ref{tab:anatomy}). \textbf{TraceLab}: $8{,}058$ sessions, $665{,}453$ rounds, $743{,}819$ tool calls. \textbf{MIMO Claude Code}: $1{,}017$ sessions, $4{,}690$ rounds. Neither links usage to outcome or billing.
+Studies 1--2 show aggregate cost hides \emph{why} an agent is expensive and that execution structure varies across systems at fixed task and model. This section audits raw execution telemetry across two independent coding-agent corpora (Table~\ref{tab:anatomy}). \textbf{TraceLab}~\cite{zhu2026tracelab}: $8{,}058$ sessions, $665{,}453$ rounds, $743{,}819$ tool calls. \textbf{MIMO Claude Code}~\cite{zou2026mimo}: $1{,}017$ sessions, $4{,}690$ rounds. Neither links usage to outcome or billing.
 
 \begin{table}[t]
 \centering
@@ -232,9 +232,7 @@ Across three studies, aggregate resource signals cannot be reliably attributed t
 
 \bibliographystyle{plainnat}
 \setlength{\bibsep}{1pt}
-\setlength{\columnsep}{14pt}
 \setlength{\multicolsep}{3pt}
-\begin{multicols}{2}
 \small
 \begin{thebibliography}{10}
 
@@ -268,8 +266,19 @@ Q. Qian, C. Huang, et al.
 \newblock Benchmark$^2$: Systematic evaluation of {LLM} benchmarks.
 \newblock {\em arXiv preprint arXiv:2601.03986}, 2026.
 
+
+\bibitem[Zhu et~al.(2026)]{zhu2026tracelab}
+K. Zhu, M. Jacob, C. Ma, Y. Pan, S. Wang, A. Krishnamurthy, and B. Kasikci.
+\newblock TraceLab: Characterizing Coding Agent Workloads for LLM Serving.
+\newblock {\em arXiv preprint arXiv:2606.30560}, 2026.
+
+\bibitem[Zou(2026)]{zou2026mimo}
+Z. Zou.
+\newblock MIMO Claude Code Traces 1K.
+\newblock {\em Hugging Face dataset}, 2026.
+\newblock \url{https://huggingface.co/datasets/choucsan/mimo-claude-code-traces-1k}
+
 \end{thebibliography}
-\end{multicols}
 
 %% ============================================================
 
