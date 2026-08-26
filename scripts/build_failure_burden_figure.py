@@ -71,7 +71,7 @@ def main():
     ax.set_xticks(xs, ['Turns', 'Asst', 'Tools', 'Tool res.', 'Chars', 'Reason'], fontsize=7)
     ax.set_ylabel('Fraction of 107 discordant pairs\nwhere failed side is heavier')
     ax.set_ylim(0.15, 0.85)
-    ax.set_title('Same task: the premium vanishes', fontsize=9)
+    ax.set_title('Same task: premium not detected', fontsize=9)
     ax.legend(fontsize=7, loc='upper right')
 
     fig.savefig(FIG / 'failure_burden_discordant.pdf', bbox_inches='tight')
